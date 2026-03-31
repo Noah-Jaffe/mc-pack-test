@@ -3,12 +3,22 @@
   "header": {
     "name": "pack.name",
     "description": "pack.description",
-    "min_engine_version": [1, 21, 0],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ],
     "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661001",
-    "version": [1, 2, 1]
+    "version": [
+      1,
+      2,
+      2
+    ]
   },
   "metadata": {
-    "authors": ["me"]
+    "authors": [
+      "me"
+    ]
   },
   "modules": [
     {
@@ -16,12 +26,20 @@
       "language": "javascript",
       "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661002",
       "entry": "scripts/main3.js",
-      "version": [1, 0, 0]
+      "version": [
+        1,
+        0,
+        0
+      ]
     },
     {
       "type": "data",
       "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661003",
-      "version": [1, 0, 0]
+      "version": [
+        1,
+        0,
+        0
+      ]
     }
   ],
   "dependencies": [
