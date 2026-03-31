@@ -162,8 +162,8 @@ function round16(value) {
 /**
  * Start the job safely
  */
-function startJob(scriptState, event) {
-    if (activeJob) {
+function startJob(event, scriptState) {
+    if (scriptState.activeJob) {
         world.sendMessage(`${colorCodePrefix.error}${scriptPrefix} is already running! to stop, run: ${colorCodePrefix.white}/scriptEvent ${stopJobId}`);
         return;
     }
@@ -207,7 +207,7 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
     if (event.id in jobHandler) {
         world.sendMessage(`${colorCodePrefix.info}Attempting to start: ${colorCodePrefix.green}${event.id}`)
         try {
-            jobHandler[event.id](SCRIPT_STATE, event);
+            jobHandler[event.id](event, SCRIPT_STATE);
         } catch (e) {
             world.sendMessage(`${colorCodePrefix.error}Error in: ${event.id}`);
             world.sendMessage(`${colorCodePrefix.error}${e}`);
