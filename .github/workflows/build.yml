@@ -1,0 +1,58 @@
+name: Build and Release MCAddon
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Bump package.json patch version and manifest version
+      - name: Bump package.json version (patch)
+        shell: pwsh
+        run: |
+          # update version
+          $manifestPath = "BP\manifest.json"
+          $manifest = Get-Content $manifestPath | ConvertFrom-Json
+          $manifest.header.version[2] = [int]$manifest.header.version[2]+1
+          $manifest | ConvertTo-Json -Depth 10 | Set-Content $manifestPath
+
+          # update language file for build verification
+          $langFile = "BP/texts/en_US.lang"
+          $langInfo = Get-Content $langFile
+          $langInfo = $langInfo -replace "_BUILD_DATE_",(get-date).ToString('yyyy-MM-ddThh:mm:ssZ')
+          
+          # create mcpack file
+          $behaviorPackDir = "BP"
+          $behaviorPacked = "build/BP.mcpack"
+          $mcpack = "build/genChunk.mcpack"
+
+          # Clean up old files if they exist
+          if (Test-Path $behaviorPacked) { Remove-Item $behaviorPacked }
+          if (Test-Path $mcpack) { Remove-Item $mcpack }
+          
+          # BUILD MCPACK
+          # Step 1: Zip behaviorPackDir folder into behaviorPacked
+          Compress-Archive -Path "$behaviorPackDir\*" -DestinationPath $behaviorPacked
+
+          # Step 2: Zip BP.mcpack into genChunk.mcpack
+          Compress-Archive -Path $behaviorPacked -DestinationPath $mcpack
+
+          Write-Host "Created $mcpack successfully."
+
+      # Commit version changes
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add BP/manifest.json build/genChunk.mcpack -f
+          git commit -m "GHA: build"  || echo "No changes"
+          git push
