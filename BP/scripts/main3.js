@@ -67,7 +67,7 @@ function* chunkGenerator(scriptState, startingLoc=null) {
 
     try {
         while (i < 10) {
-            world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
+          //  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
         // for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
             // Check cancel flag every iteration
             if (scriptState.cancelRequested) {
