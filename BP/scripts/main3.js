@@ -2,6 +2,7 @@ import { system, world, Vector3 } from "@minecraft/server";
 const scriptPrefix = `chunkGen`
 const startJobId = `${scriptPrefix}:start`
 const stopJobId = `${scriptPrefix}:stop`
+const debugJobId = `${scriptPrefix}:dbg`
 const colorCodePrefix = {
   "black": "§0",
   "dark_blue": "§1",
@@ -193,6 +194,15 @@ function stopJob(event, scriptState) {
     scriptState.cancelRequested = true;
 }
 
+function debugJob(event, scriptState) {
+	try {
+	world.sendMessage(`${colorCodePrefix.debug}${scriptPrefix}: ${JSON.stringify(event, null, 0)}`);
+	} catch {}
+	try {
+	world.sendMessage(`${colorCodePrefix.debug}${scriptPrefix}: ${JSON.stringify(scriptState, null, 0)}`);
+	} catch {}
+	world.sendMessage("hi")
+}
 /**
  * Listen for script events
  */
@@ -200,6 +210,7 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
     const jobHandler = {
         [startJobId]: startJob,
         [stopJobId]: stopJob,
+        [debugJobId]: debugJob,
     }
     
     if (event.id in jobHandler) {
