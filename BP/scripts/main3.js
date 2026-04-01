@@ -171,7 +171,7 @@ function startJob(event, scriptState) {
     const job = chunkGenerator(scriptState, startingLoc);
     scriptState.activeJob = system.runJob(job);
 
-    world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started.`);
+    world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started id: ${scriptState.activeJob}`);
 }
 
 /**
