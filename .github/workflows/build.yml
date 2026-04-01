@@ -28,7 +28,8 @@ jobs:
           # update language file for build verification
           $langFile = "BP/texts/en_US.lang"
           $langInfo = Get-Content $langFile
-          $langInfo = $langInfo -replace "_BUILD_DATE_",(get-date).ToString('yyyy-MM-ddThh:mm:ssZ')
+          $langInfo = $langInfo -replace "_BUILD_DATE_","$((get-date).ToString('yyyy-MM-ddThh:mm:ssZ'))"
+          Set-Content $langFile $langInfo
           
           # create mcpack file
           $behaviorPackDir = "BP"
