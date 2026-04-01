@@ -40,8 +40,6 @@ const SCRIPT_STATE = {
     activeJob: null,
     cancelRequested: false
 }
-let activeJob = null;
-let cancelRequested = false;
 
 function resetJobState(scriptState) {
     scriptState.activeJob = null;
@@ -171,7 +169,7 @@ function startJob(event, scriptState) {
     cancelRequested = false;
     const startingLoc = event?.sourceEntity?.location;
     const job = chunkGenerator(scriptState, startingLoc);
-    system.runJob(job);
+    scriptState.activeJob = system.runJob(job);
 
     world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started.`);
 }
@@ -185,7 +183,7 @@ function stopJob(event, scriptState) {
         return;
     } else {
         try {
-            system.clearJob(activeJob);
+            system.clearJob(scriptState.activeJob);
         } catch (e){
             console.error(e);
         }
