@@ -34,15 +34,22 @@ const colorCodePrefix = {
   "material_diamond": "§s",
   "material_lapis": "§t",
   "material_amethyst": "§u",
-  "material_resin": "§v"
+  "material_resin": "§v",
+  "reset": "§r",
+  "obfuscate": "§k",
+  "bold": "§l",
+  "italic": "§o",
+  
 }
 // Store current job + cancel state
 const SCRIPT_STATE = {
     activeJob: null,
-    cancelRequested: false
+    cancelRequested: false,
+    debug: false
 }
 
 function resetJobState(scriptState) {
+	scriptState.lastCalled="resetJobState"
     scriptState.activeJob = null;
     scriptState.cancelRequested = false;
     try {
@@ -57,6 +64,8 @@ function resetJobState(scriptState) {
  * This simulates chunk generation work over time
  */
 function* chunkGenerator(scriptState, startingLoc=null) {
+  scriptState.lastCalled="chunkGenerator";
+
     // let failsafe = (() => {const abortTick = system.currentTick + 1200; return () => {return system.currentTick < abortTick} })();
     let i = 0;
     let lastActivityTick = system.currentTick;
@@ -68,6 +77,7 @@ function* chunkGenerator(scriptState, startingLoc=null) {
 
     try {
         while (i < 10) {
+        	if (scriptState.debug) { popupDisplay(scriptState, `tick: ${system.currentTic}\nlastTick: ${lastActivityTick}`)  }
           //  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
         // for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
             // Check cancel flag every iteration
@@ -96,8 +106,10 @@ function* chunkGenerator(scriptState, startingLoc=null) {
 
 // @note: infinite generator
 function* walkChunkTaxicab(center) {
-    const baseX = round16(center.x);
-    const baseZ = round16(center.z);
+  scriptState.lastCalled="walkChunkTaxicab";
+
+    const baseX = roundForChunkEdge(center.x);
+    const baseZ = roundForChunkEdge(center.z);
 
     // Always yield center first
     yield { x: baseX, z: baseZ };
@@ -149,7 +161,12 @@ function* walkChunkTaxicab(center) {
         }
     }
 }
-function round16(value) {
+
+
+function roundForChunkEdge(value) {
+  scriptState.lastCalled="roundForChunkEdge"
+  const chunkSize = 15;
+
     if (value >= 0) {
         return value - (value % 16);
     }
@@ -162,6 +179,8 @@ function round16(value) {
  * Start the job safely
  */
 function startJob(event, scriptState) {
+  scriptState.lastCalled="startJob";
+
     if (scriptState.activeJob) {
         world.sendMessage(`${colorCodePrefix.error}${scriptPrefix} is already running! to stop, run: ${colorCodePrefix.white}/scriptEvent ${stopJobId}`);
         return;
@@ -179,6 +198,8 @@ function startJob(event, scriptState) {
  * Stop the job safely
  */
 function stopJob(event, scriptState) {
+  scriptState.lastCalled="stopJob";
+
     if (scriptState.activeJob == null) {
         world.sendMessage(`${colorCodePrefix.error}${scriptPrefix} is not running! To start, run: ${colorCodePrefix.white}/scriptEvent ${startJobId}`);
         return;
@@ -195,14 +216,39 @@ function stopJob(event, scriptState) {
 }
 
 function debugJob(event, scriptState) {
-	try {
-	world.sendMessage(`${colorCodePrefix.debug}${scriptPrefix}: ${JSON.stringify(event, null, 0)}`);
-	} catch {}
-	try {
-	world.sendMessage(`${colorCodePrefix.debug}${scriptPrefix}: ${JSON.stringify(scriptState, null, 0)}`);
-	} catch {}
-	world.sendMessage("hi")
+	scriptState.lastCalled="debugJob"
+  scriptState.debug = !scriptState.debug;
+  world.sendMessage(`${colorCodePrefix.info}Set debug mdoe to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`)
 }
+
+function popupDisplay() {
+	const lines = [];
+	/*try {
+		lines.push(`${colorCodePrefix.blue}EVENT:`)
+		let js = JSON.stringify(event, null, 0)
+		js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
+	} catch {
+		lines.push(`${colorCodePrefix.error}Failed to format event data`)
+	}
+	*/
+	try {
+		lines.push(`${colorCodePrefix.blue}SCRIPTSTATE:`)
+		let js = JSON.stringify(SCRIPT_STATE, null, 0)
+		js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
+	} catch {
+		lines.push(`${colorCodePrefix.error}Failed to format scriptState data`)
+	}
+	for (let a = 0; a < arguments.length; ++a) {
+		try {
+			let js = JSON.stringify(arguments[a], null, 0)
+			js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
+		} catch {
+			lines.push(`${colorCodePrefix.error}Failed to format input arg[${a}`)
+		}
+	}
+	player.onScreenDisplay.setActionBar(lines.filter(e=>e.toString().trim()).join("\n§r"));
+}
+
 /**
  * Listen for script events
  */
@@ -222,7 +268,7 @@ system.afterEvents.scriptEventReceive.subscribe((event) => {
             world.sendMessage(`${colorCodePrefix.error}${e}`);
             console.error(e);
         }
-        world.sendMessage(`${colorCodePrefix.info}Started job: ${colorCodePrefix.green}${event.id}`)
+        world.sendMessage(`${colorCodePrefix.info}spawned job: ${colorCodePrefix.blue}${event.id}`)
     }
     
 });
