@@ -63,7 +63,7 @@ function resetJobState(scriptState) {
  * Example generator job
  * This simulates chunk generation work over time
  */
-function* chunkGenerator(scriptState, startingLoc=null) {
+function* chunkGenerator(scriptState, startingLoc=null, event=null) {
   scriptState.lastCalled="chunkGenerator";
 
     // let failsafe = (() => {const abortTick = system.currentTick + 1200; return () => {return system.currentTick < abortTick} })();
@@ -77,7 +77,7 @@ function* chunkGenerator(scriptState, startingLoc=null) {
 
     try {
         while (i < 10) {
-        	if (scriptState.debug) { popupDisplay(scriptState, `tick: ${system.currentTic}\nlastTick: ${lastActivityTick}`)  }
+        	if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTic}\nlastTick: ${lastActivityTick}`)  }
           //  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
         // for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
             // Check cancel flag every iteration
@@ -188,7 +188,7 @@ function startJob(event, scriptState) {
 
     scriptState.cancelRequested = false;
     const startingLoc = event?.sourceEntity?.location;
-    const job = chunkGenerator(scriptState, startingLoc);
+    const job = chunkGenerator(scriptState, startingLoc, event);
     scriptState.activeJob = system.runJob(job);
 
     world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started id: ${scriptState.activeJob}`);
@@ -221,16 +221,16 @@ function debugJob(event, scriptState) {
   world.sendMessage(`${colorCodePrefix.info}Set debug mdoe to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`)
 }
 
-function popupDisplay() {
+function popupDisplay(event, scriptState) {
 	const lines = [];
-	/*try {
+	try {
 		lines.push(`${colorCodePrefix.blue}EVENT:`)
 		let js = JSON.stringify(event, null, 0)
 		js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
 	} catch {
 		lines.push(`${colorCodePrefix.error}Failed to format event data`)
 	}
-	*/
+	
 	try {
 		lines.push(`${colorCodePrefix.blue}SCRIPTSTATE:`)
 		let js = JSON.stringify(SCRIPT_STATE, null, 0)
@@ -238,7 +238,7 @@ function popupDisplay() {
 	} catch {
 		lines.push(`${colorCodePrefix.error}Failed to format scriptState data`)
 	}
-	for (let a = 0; a < arguments.length; ++a) {
+	for (let a = 2; a < arguments.length; ++a) {
 		try {
 			let js = JSON.stringify(arguments[a], null, 0)
 			js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
@@ -246,7 +246,7 @@ function popupDisplay() {
 			lines.push(`${colorCodePrefix.error}Failed to format input arg[${a}`)
 		}
 	}
-	player.onScreenDisplay.setActionBar(lines.filter(e=>e.toString().trim()).join("\n§r"));
+	event.sourceEntity?.onScreenDisplay?.setActionBar(lines.filter(e=>e.toString().trim()).join("\n§r"));
 }
 
 /**
