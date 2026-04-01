@@ -166,7 +166,7 @@ function startJob(event, scriptState) {
         return;
     }
 
-    cancelRequested = false;
+    scriptState.cancelRequested = false;
     const startingLoc = event?.sourceEntity?.location;
     const job = chunkGenerator(scriptState, startingLoc);
     scriptState.activeJob = system.runJob(job);
