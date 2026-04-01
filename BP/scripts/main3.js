@@ -11,6 +11,7 @@ const colorCodePrefix = {
   "dark_red": "§4",
   "dark_purple": "§5",
   "gold": "§6",
+  "debug": "§6",
   "gray": "§7",
   "dark_gray": "§8",
   "blue": "§9",
@@ -77,7 +78,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 
     try {
         while (i < 10) {
-        	if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTic}\nlastTick: ${lastActivityTick}`)  }
+        	if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`)  }
           //  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
         // for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
             // Check cancel flag every iteration
@@ -240,7 +241,12 @@ function popupDisplay(event, scriptState) {
 	}
 	for (let a = 2; a < arguments.length; ++a) {
 		try {
-			let js = JSON.stringify(arguments[a], null, 0)
+			let js;
+			if (typeof a == "object") {
+			js = JSON.stringify(arguments[a], null, 0)
+			} else {
+				js = arguments[a].toString()
+			}
 			js.split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
 		} catch {
 			lines.push(`${colorCodePrefix.error}Failed to format input arg[${a}`)
