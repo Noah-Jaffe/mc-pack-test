@@ -86,7 +86,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
-			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`)  }
+			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`\n${JSON.stringify(chunkToLoad})  }
 			n++;
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
@@ -141,7 +141,7 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(step)}`); yield step;
+			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
 			x++;
 			z++;
 		}
@@ -152,7 +152,7 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(step)}`); yield step;
+			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
 			x--;
 			z++;
 		}
@@ -163,7 +163,7 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			}
-			world.sendMessage(`${JSON.stringify(step)}`); yield step; 
+			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step; 
 			x--;
 			z--;
 		}
@@ -174,7 +174,7 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(step)}`); yield step;
+			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
 			x++;
 			z--;
 		}
