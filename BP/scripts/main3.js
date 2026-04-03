@@ -175,6 +175,7 @@ function* walkChunkTaxicab(scriptState) {
 			z--;
 		}
 	}
+	world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} stopping walker  ${stopJobId}`);
 }
 
 
