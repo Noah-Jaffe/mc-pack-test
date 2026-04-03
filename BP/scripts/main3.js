@@ -85,7 +85,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		let chunkToLoad = walkChunkTaxicab(scriptState);
-		for (const  of walkChunkTaxicab(scriptState)) {
+		while(!scriptState.cancelRequested && chunkToLoad) {
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
 				break;
