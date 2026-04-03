@@ -95,8 +95,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 			let currentTick = system.currentTick;
 			// Simulated work (replace with real logic)
 			if (currentTick - lastActivityTick >= 60) {
-				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}#${i} ${colorCodePrefix.gold}@ ${currentTick}`);
-				i++;
+				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}#${n} ${colorCodePrefix.gold}@ ${currentTick}`);
 				lastActivityTick = currentTick;
 			}
 			// Yield so the game doesn't freeze
@@ -126,7 +125,8 @@ function* walkChunkTaxicab(scriptState) {
 	const baseZ = roundForChunkEdge(center.z);
 	
 	// Always yield center first
-	yield { x: baseX, z: baseZ };
+	let step = { x: baseX, z: baseZ };
+	yield step;
 	let r = (scriptState.step ?? 0 )|| 0;
 	while (!scriptState.cancelRequested) {
 		r++;
@@ -137,40 +137,44 @@ function* walkChunkTaxicab(scriptState) {
 		
 		// Top-right edge
 		while (x < r && z < 0) {
-			yield {
+			ret = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
+			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
 			x++;
 			z++;
 		}
 		
 		// Bottom-right edge
 		while (x > 0 && z < r) {
-			yield {
+			ret = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
+			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
 			x--;
 			z++;
 		}
 		
 		// Bottom-left edge
 		while (x > -r && z > 0) {
-			yield {
+			ret = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
-			};
+			}
+			world.sendMessage(`${JSON.stringify(ret)}`); yield ret; 
 			x--;
 			z--;
 		}
 		
 		// Top-left edge
 		while (x < 0 && z > -r) {
-			yield {
+			ret ={
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
+			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
 			x++;
 			z--;
 		}
