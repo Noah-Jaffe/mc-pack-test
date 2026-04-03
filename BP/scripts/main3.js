@@ -85,7 +85,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
-			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad})`}
+			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad)}`)}
 			n++;
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
