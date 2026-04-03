@@ -83,10 +83,10 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested}`)
 	try {
 		
-		if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`)  }
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
+			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`)  }
 			n++;
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
@@ -137,44 +137,44 @@ function* walkChunkTaxicab(scriptState) {
 		
 		// Top-right edge
 		while (x < r && z < 0) {
-			ret = {
+			step = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
+			world.sendMessage(`${JSON.stringify(step)}`); yield step;
 			x++;
 			z++;
 		}
 		
 		// Bottom-right edge
 		while (x > 0 && z < r) {
-			ret = {
+			step = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
+			world.sendMessage(`${JSON.stringify(step)}`); yield step;
 			x--;
 			z++;
 		}
 		
 		// Bottom-left edge
 		while (x > -r && z > 0) {
-			ret = {
+			step  = {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			}
-			world.sendMessage(`${JSON.stringify(ret)}`); yield ret; 
+			world.sendMessage(`${JSON.stringify(step)}`); yield step; 
 			x--;
 			z--;
 		}
 		
 		// Top-left edge
 		while (x < 0 && z > -r) {
-			ret ={
+			step ={
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			world.sendMessage(`${JSON.stringify(ret)}`); yield ret;
+			world.sendMessage(`${JSON.stringify(step)}`); yield step;
 			x++;
 			z--;
 		}
