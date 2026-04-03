@@ -84,9 +84,8 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
-		for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
-			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad)}`)}
-			n++;
+		let chunkToLoad = walkChunkTaxicab(scriptState);
+		for (const  of walkChunkTaxicab(scriptState)) {
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
 				break;
@@ -94,7 +93,11 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 			let currentTick = system.currentTick;
 			// Simulated work (replace with real logic)
 			if (currentTick - lastActivityTick >= 60) {
+				chunkToLoad = chunkToLoad.next();
+			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad.value)}`)}
+			n++;
 				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}#${n} ${colorCodePrefix.gold}@ ${currentTick}`);
+				// do action here
 				lastActivityTick = currentTick;
 			}
 			// Yield so the game doesn't freeze
