@@ -337,6 +337,7 @@ const jobHandler = {
 if (typeof system == "undefined") {
 	test()
 } else {
-	world.sendMessage(Object.keys(jobHandler).map(k=> `/scriptevent ${k}`).join("\n"))
+	
 	system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
+	world.sendMessage(Object.keys(jobHandler).map(k=> `/scriptevent ${k}`).join("\n") ?? "loaded!")
 }
