@@ -46,7 +46,7 @@ const colorCodePrefix = {
 const SCRIPT_STATE = {
 	activeJob: null,
 	cancelRequested: false,
-	debug: false,
+	debug: true,
 	root: null,
 	step: null,
 	
@@ -73,7 +73,6 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	//   scriptState.lastCalled="chunkGenerator";
 	
 	// let failsafe = (() => {const abortTick = system.currentTick + 1200; return () => {return system.currentTick < abortTick} })();
-	let i = 0;
 	let lastActivityTick = system.currentTick;
 	if (!startingLoc) {
 		startingLoc = scriptState.root ?? {x:0,z:0};
@@ -86,7 +85,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		for (const chunkToLoad of walkChunkTaxicab(scriptState)) {
-			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}`\n${JSON.stringify(chunkToLoad})  }
+			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad})`}
 			n++;
 			// Check cancel flag every iteration
 			if (scriptState.cancelRequested) {
