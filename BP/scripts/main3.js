@@ -74,8 +74,8 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	if (!startingLoc) {
 		startingLoc = scriptState.root ?? {x:0,z:0};
 	}
-	scriptState.root = {x:startingLoc.x, z: startingLoc.z};
-	world.sendMessage(`${colorCodePrefix.green}@ ${startingLoc.x} ${startingLoc.z}`)
+	scriptState.root = {x:parseFloat((startingLoc.x).toFixed(2)), z: parseFloat((startingLoc.z).toFixed(2))};
+	world.sendMessage(`${colorCodePrefix.green}starting @ ${JSON.stringify(scriptState.root)}`)
 	world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested}`)
 	try {
 		let n = parseInt(scriptState.step) || 0;
@@ -327,7 +327,7 @@ const jobHandler = {
 	[debugJobId]: debugJob,
 };
 
-	
+
 if (typeof system == "undefined") {
 	test()
 } else {
