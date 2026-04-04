@@ -91,6 +91,7 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 				const chunk = chunkToLoad.next();
 				scriptState.step++;
 				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
+				console.warn(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
 				// do action here
 				lastActivityTick = currentTick;
 			}
@@ -297,7 +298,7 @@ function recognizeMyEvents(event) {
 
 function test(){
 	// debug walker code
-	n=1000
+	n=12
 	radius = Math.ceil(Math.sqrt(n));
 	size = radius * 2 + 1;
 	arr = new Array(size)
@@ -450,7 +451,5 @@ if (typeof system === "undefined") {
   sim.fireScriptEvent("chunkGen:stop");
   sim.tick(100);
 } else {
-	
 	system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
-	world.sendMessage(Object.keys(jobHandler).map(k=> `/scriptevent ${k}`).join("\n") ?? "loaded!")
 }
