@@ -1,10 +1,10 @@
 // import { system, world, Vector3 } from "@minecraft/server";
 
-const scriptPrefix = `chunkGen`
-const startJobId = `${scriptPrefix}:start`
-const stopJobId = `${scriptPrefix}:stop`
-const debugJobId = `${scriptPrefix}:dbg`
-const INTERVAL_BETWEEN_ACTIONS = 10;
+const scriptPrefix = `chunkGen`;
+const startJobId = `${scriptPrefix}:start`;
+const stopJobId = `${scriptPrefix}:stop`;
+const debugJobId = `${scriptPrefix}:dbg`;
+const INTERVAL_BETWEEN_ACTIONS = 5;
 const colorCodePrefix = {
 	"black": "§0",
 	"dark_blue": "§1",
@@ -78,21 +78,19 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	}
 	scriptState.root = {x:parseFloat((startingLoc.x).toFixed(2)), z: parseFloat((startingLoc.z).toFixed(2))};
 	try {
-		let n = parseInt(scriptState.step) || 0;
+		scriptState.step = parseInt(scriptState.step) || 0;
 		let chunkToLoad = walkChunkTaxicab(scriptState);
-		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${n}${colorCodePrefix.reset}\nchunkToLoad truthy ${colorCodePrefix.green}${chunkToLoad?true:false}${colorCodePrefix.reset}`)
+		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${scriptState.step}${colorCodePrefix.reset}\nchunkToLoad truthy ${colorCodePrefix.green}${chunkToLoad?true:false}${colorCodePrefix.reset}`)
 		while(!chunkToLoad.done) {
 			let currentTick = system.currentTick;
 			if (scriptState.debug) {
-				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nchunkToLoad: ${JSON.stringify(chunkToLoad.value)}`)
+				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nn: ${scriptState.step}`)
 			}
 			// action per tick here
 			if (currentTick - lastActivityTick >= INTERVAL_BETWEEN_ACTIONS) {
-				chunkToLoad = chunkToLoad.next();
-				const chunk = chunkToLoad.value;
-				n++;
-				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${n} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk)}`);
-				console.log("?",chunkToLoad, chunkToLoad.value, chunk)
+				const chunk = chunkToLoad.next();
+				scriptState.step++;
+				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
 				// do action here
 				lastActivityTick = currentTick;
 			}
@@ -100,7 +98,6 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 			yield;
 		}
 		if (scriptState.cancelRequested) {
-			scriptState.step = n;
 			world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
 			return resetJobState(scriptState);
 		}
@@ -123,9 +120,11 @@ function* walkChunkTaxicab(scriptState) {
 	
 	// Always yield center first
 	let step = { x: baseX, z: baseZ };
+	// world.sendMessage(`0 ${JSON.stringify(step)}`); 
 	yield step;
 	let r = (scriptState.step ?? 0 )|| 0;
-	while (1){//!scriptState.cancelRequested) {
+	while (true){
+		//!scriptState.cancelRequested) {
 		r++;
 		let x = 0;
 		let z = -r;
@@ -138,7 +137,8 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
+		//	world.sendMessage(`1 ${JSON.stringify(step)}`);
+		yield step;
 			x++;
 			z++;
 		}
@@ -149,7 +149,8 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
+			// world.sendMessage(`2 ${JSON.stringify(step)}`);
+			yield step;
 			x--;
 			z++;
 		}
@@ -160,7 +161,8 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			}
-			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step; 
+			// world.sendMessage(`3 ${JSON.stringify(step)}`); 
+			yield step; 
 			x--;
 			z--;
 		}
@@ -171,7 +173,8 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-			/*world.sendMessage(`${JSON.stringify(step)}`); */yield step;
+			// world.sendMessage(`4 ${JSON.stringify(step)}`); 
+			yield step;
 			x++;
 			z--;
 		}
