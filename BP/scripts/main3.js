@@ -4,7 +4,7 @@ const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:dbg`;
-const INTERVAL_BETWEEN_ACTIONS = 5;
+const INTERVAL_BETWEEN_ACTIONS = 60;
 const colorCodePrefix = {
 	"black": "§0",
 	"dark_blue": "§1",
@@ -80,8 +80,11 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	try {
 		scriptState.step = parseInt(scriptState.step) || 0;
 		let chunkToLoad = walkChunkTaxicab(scriptState);
-		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${scriptState.step}${colorCodePrefix.reset}\nchunkToLoad truthy ${colorCodePrefix.green}${chunkToLoad?true:false}${colorCodePrefix.reset}`)
-		while(!chunkToLoad.done) {
+		for (let i=0;i<scriptState.step; ++i) {
+			chunkToLoad.next();
+		}
+		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${scriptState.step}${colorCodePrefix.reset}`)
+		while(!chunkToLoad.done && !scriptState.cancelRequested) {
 			let currentTick = system.currentTick;
 			if (scriptState.debug) {
 				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nn: ${scriptState.step}`)
@@ -122,7 +125,7 @@ function* walkChunkTaxicab(scriptState) {
 	let step = { x: baseX, z: baseZ };
 	// world.sendMessage(`0 ${JSON.stringify(step)}`); 
 	yield step;
-	let r = (scriptState.step ?? 0 )|| 0;
+	let r = 0;
 	while (true){
 		//!scriptState.cancelRequested) {
 		r++;
@@ -239,7 +242,7 @@ function stopJob(event, scriptState) {
 function debugJob(event, scriptState) {
 	// 	scriptState.lastCalled="debugJob"
 	scriptState.debug = !scriptState.debug;
-	world.sendMessage(`${colorCodePrefix.info}Set debug mdoe to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`)
+	world.sendMessage(`${colorCodePrefix.info}Set debug mode to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`)
 }
 
 function popupDisplay(event, scriptState) {
