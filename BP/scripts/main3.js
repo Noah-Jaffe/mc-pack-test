@@ -91,7 +91,6 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 				const chunk = chunkToLoad.next();
 				scriptState.step++;
 				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
-				console.warn(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
 				// do action here
 				lastActivityTick = currentTick;
 			}
@@ -138,8 +137,8 @@ function* walkChunkTaxicab(scriptState) {
 				x: baseX + x * chunkSize,
 				z: baseZ + z * chunkSize,
 			};
-		//	world.sendMessage(`1 ${JSON.stringify(step)}`);
-		yield step;
+			//	world.sendMessage(`1 ${JSON.stringify(step)}`);
+			yield step;
 			x++;
 			z++;
 		}
@@ -328,76 +327,76 @@ function test(){
 
 // ===== MOCK RUNTIME =====
 function createMockMinecraft() {
-  let currentTick = 0;
-  let nextJobId = 1;
-  const jobs = new Map();
-  
-  const system = {
-    get currentTick() {
-      return currentTick;
-    },
-
-    runJob(gen) {
-      const id = nextJobId++;
-      jobs.set(id, gen);
-      return id;
-    },
-
-    clearJob(id) {
-      jobs.delete(id);
-    },
-
-    afterEvents: {
-      scriptEventReceive: {
-      	subscribed: [], 
-        subscribe: (cb)=>{
-          this.system.afterEvents.scriptEventReceive.subscribed.push(cb);
-        }
-      }
-    }
-  };
-
-  const world = {
-    sendMessage(msg) {
-    	const stack = new Error("just for stack trace");
-    	msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
-      console.trace(`[MSG @${currentTick}]`, msg, stack);
-    }
-  };
-
-  function tick(n = 1) {
-    for (let i = 0; i < n; i++) {
-      currentTick++;
-
-      for (const [id, job] of [...jobs]) {
-        const res = job.next();
-        if (res.done) {
-          jobs.delete(id);
-        }
-      }
-    }
-  }
-
-  function fireScriptEvent(id, sourceEntity = null) {
-    for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
-
-    scriptEventCallback({
-      id,
-      sourceEntity: sourceEntity ?? {
-        location: { x: 0, y: 0, z: 0 },
-        onScreenDisplay: {
-          setActionBar: (msg) => {
-          	const stack = new Error("just for stack trace");
-          	msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
-          	console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
-          }
-        }
-      }
-    });
-    }
-  }
-
-  return { system, world, tick, fireScriptEvent };
+	let currentTick = 0;
+	let nextJobId = 1;
+	const jobs = new Map();
+	
+	const system = {
+		get currentTick() {
+			return currentTick;
+		},
+		
+		runJob(gen) {
+			const id = nextJobId++;
+			jobs.set(id, gen);
+			return id;
+		},
+		
+		clearJob(id) {
+			jobs.delete(id);
+		},
+		
+		afterEvents: {
+			scriptEventReceive: {
+				subscribed: [], 
+				subscribe: (cb)=>{
+					this.system.afterEvents.scriptEventReceive.subscribed.push(cb);
+				}
+			}
+		}
+	};
+	
+	const world = {
+		sendMessage(msg) {
+			const stack = new Error("just for stack trace");
+			msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+			console.trace(`[MSG @${currentTick}]`, msg, stack);
+		}
+	};
+	
+	function tick(n = 1) {
+		for (let i = 0; i < n; i++) {
+			currentTick++;
+			
+			for (const [id, job] of [...jobs]) {
+				const res = job.next();
+				if (res.done) {
+					jobs.delete(id);
+				}
+			}
+		}
+	}
+	
+	function fireScriptEvent(id, sourceEntity = null) {
+		for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
+			
+			scriptEventCallback({
+				id,
+				sourceEntity: sourceEntity ?? {
+					location: { x: 0, y: 0, z: 0 },
+					onScreenDisplay: {
+						setActionBar: (msg) => {
+							const stack = new Error("just for stack trace");
+							msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+							console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
+						}
+					}
+				}
+			});
+		}
+	}
+	
+	return { system, world, tick, fireScriptEvent };
 }
 
 const jobHandler = {
@@ -433,23 +432,23 @@ if (typeof system === "undefined") {
 	Vector3 = new anythingGoes();
 	
 	const sim = createMockMinecraft();
-  system = sim.system;
-  world = sim.world;
-  
-  // Load your script (or paste it here)
-  system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
-
-  // Simulate commands
-  sim.fireScriptEvent("chunkGen:start");
-
-  // Run game loop
-  sim.tick(10); // simulate ticks
-  sim.tick(10); // simulate ticks
-  sim.fireScriptEvent("chunkGen:dbg")
-  sim.tick(10); // simulate ticks
-  // Stop midway (optional)
-  sim.fireScriptEvent("chunkGen:stop");
-  sim.tick(100);
+	system = sim.system;
+	world = sim.world;
+	
+	// Load your script (or paste it here)
+	system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
+	
+	// Simulate commands
+	sim.fireScriptEvent("chunkGen:start");
+	
+	// Run game loop
+	sim.tick(10); // simulate ticks
+	sim.tick(10); // simulate ticks
+	sim.fireScriptEvent("chunkGen:dbg")
+	sim.tick(10); // simulate ticks
+	// Stop midway (optional)
+	sim.fireScriptEvent("chunkGen:stop");
+	sim.tick(100);
 } else {
 	system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 }
