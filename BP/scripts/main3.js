@@ -1,8 +1,10 @@
-import { system, world, Vector3 } from "@minecraft/server";
+// import { system, world, Vector3 } from "@minecraft/server";
+
 const scriptPrefix = `chunkGen`
 const startJobId = `${scriptPrefix}:start`
 const stopJobId = `${scriptPrefix}:stop`
 const debugJobId = `${scriptPrefix}:dbg`
+const INTERVAL_BETWEEN_ACTIONS = 10;
 const colorCodePrefix = {
 	"black": "§0",
 	"dark_blue": "§1",
@@ -46,7 +48,7 @@ const colorCodePrefix = {
 const SCRIPT_STATE = {
 	activeJob: null,
 	cancelRequested: false,
-	debug: true,
+	debug: false,
 	root: null,
 	step: null,
 	
@@ -75,22 +77,22 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 		startingLoc = scriptState.root ?? {x:0,z:0};
 	}
 	scriptState.root = {x:parseFloat((startingLoc.x).toFixed(2)), z: parseFloat((startingLoc.z).toFixed(2))};
-	world.sendMessage(`${colorCodePrefix.green}starting @ ${JSON.stringify(scriptState.root)}`)
-	world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested}`)
 	try {
 		let n = parseInt(scriptState.step) || 0;
 		let chunkToLoad = walkChunkTaxicab(scriptState);
-		world.sendMessage(`${colorCodePrefix.debug}starting step: ${n}\nchunkToLoad truthy ${chunkToLoad?true:false}`)
-		while(!scriptState.cancelRequested && chunkToLoad) {
+		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${n}${colorCodePrefix.reset}\nchunkToLoad truthy ${colorCodePrefix.green}${chunkToLoad?true:false}${colorCodePrefix.reset}`)
+		while(!chunkToLoad.done) {
 			let currentTick = system.currentTick;
 			if (scriptState.debug) {
 				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nchunkToLoad: ${JSON.stringify(chunkToLoad.value)}`)
 			}
-			// Simulated work (replace with real logic)
-			if (currentTick - lastActivityTick >= 60) {
+			// action per tick here
+			if (currentTick - lastActivityTick >= INTERVAL_BETWEEN_ACTIONS) {
 				chunkToLoad = chunkToLoad.next();
+				const chunk = chunkToLoad.value;
 				n++;
-				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}#${n} ${colorCodePrefix.gold}@ ${currentTick}`);
+				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${n} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk)}`);
+				console.log("?",chunkToLoad, chunkToLoad.value, chunk)
 				// do action here
 				lastActivityTick = currentTick;
 			}
@@ -116,7 +118,6 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 function* walkChunkTaxicab(scriptState) {
 	//  // scriptState.lastCalled="walkChunkTaxicab";
 	const center = scriptState.root;
-	
 	const baseX = roundForChunkEdge(center.x);
 	const baseZ = roundForChunkEdge(center.z);
 	
@@ -124,7 +125,7 @@ function* walkChunkTaxicab(scriptState) {
 	let step = { x: baseX, z: baseZ };
 	yield step;
 	let r = (scriptState.step ?? 0 )|| 0;
-	while (!scriptState.cancelRequested) {
+	while (1){//!scriptState.cancelRequested) {
 		r++;
 		let x = 0;
 		let z = -r;
@@ -176,6 +177,7 @@ function* walkChunkTaxicab(scriptState) {
 		}
 	}
 	world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} stopping walker  ${stopJobId}`);
+	return null;
 }
 
 
@@ -320,6 +322,79 @@ function test(){
 	console.log(arr.map(r=>r.join("\t")).join("\n"))
 }
 
+// ===== MOCK RUNTIME =====
+function createMockMinecraft() {
+  let currentTick = 0;
+  let nextJobId = 1;
+  const jobs = new Map();
+  
+  const system = {
+    get currentTick() {
+      return currentTick;
+    },
+
+    runJob(gen) {
+      const id = nextJobId++;
+      jobs.set(id, gen);
+      return id;
+    },
+
+    clearJob(id) {
+      jobs.delete(id);
+    },
+
+    afterEvents: {
+      scriptEventReceive: {
+      	subscribed: [], 
+        subscribe: (cb)=>{
+          this.system.afterEvents.scriptEventReceive.subscribed.push(cb);
+        }
+      }
+    }
+  };
+
+  const world = {
+    sendMessage(msg) {
+    	const stack = new Error("just for stack trace");
+    	msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+      console.trace(`[MSG @${currentTick}]`, msg, stack);
+    }
+  };
+
+  function tick(n = 1) {
+    for (let i = 0; i < n; i++) {
+      currentTick++;
+
+      for (const [id, job] of [...jobs]) {
+        const res = job.next();
+        if (res.done) {
+          jobs.delete(id);
+        }
+      }
+    }
+  }
+
+  function fireScriptEvent(id, sourceEntity = null) {
+    for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
+
+    scriptEventCallback({
+      id,
+      sourceEntity: sourceEntity ?? {
+        location: { x: 0, y: 0, z: 0 },
+        onScreenDisplay: {
+          setActionBar: (msg) => {
+          	const stack = new Error("just for stack trace");
+          	msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+          	console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
+          }
+        }
+      }
+    });
+    }
+  }
+
+  return { system, world, tick, fireScriptEvent };
+}
 
 const jobHandler = {
 	[startJobId]: startJob,
@@ -327,9 +402,50 @@ const jobHandler = {
 	[debugJobId]: debugJob,
 };
 
+// Inject mocks if not in Minecraft
+if (typeof system === "undefined") {
+	class anythingGoes {
+		constructor(path = []) {
+			return new Proxy(() => {}, {
+				// on any property read, print what we are trying to access
+				get: (target, prop) => {
+					// Ignore special cases like inspection, symbols, etc.
+					if (prop === Symbol.toPrimitive) return () => path.join('.');
+					if (prop === 'toString') return () => path.join('.');
+					if (prop === 'valueOf') return () => path.join('.');
+					if (typeof prop === "symbol") return target[prop];
+					const newPath = [...path, prop];
+					console.log(`accessed ${newPath.join('.')}`);
+					return new anythingGoes(newPath);
+				},
+				// on any function call, print that we tried to call it
+				apply: (target, thisArg, args) => {
+					console.log(`called ${path.join('.')}`);
+					return new anythingGoes(path);
+				}
+			});
+		}
+	}
+	Vector3 = new anythingGoes();
+	
+	const sim = createMockMinecraft();
+  system = sim.system;
+  world = sim.world;
+  
+  // Load your script (or paste it here)
+  system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 
-if (typeof system == "undefined") {
-	test()
+  // Simulate commands
+  sim.fireScriptEvent("chunkGen:start");
+
+  // Run game loop
+  sim.tick(10); // simulate ticks
+  sim.tick(10); // simulate ticks
+  sim.fireScriptEvent("chunkGen:dbg")
+  sim.tick(10); // simulate ticks
+  // Stop midway (optional)
+  sim.fireScriptEvent("chunkGen:stop");
+  sim.tick(100);
 } else {
 	
 	system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
