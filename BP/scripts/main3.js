@@ -70,10 +70,7 @@ function resetJobState(scriptState) {
 * This simulates chunk generation work over time
 */
 function* chunkGenerator(scriptState, startingLoc=null, event=null) {
-	//   scriptState.lastCalled="chunkGenerator";
-	
-	// let failsafe = (() => {const abortTick = system.currentTick + 1200; return () => {return system.currentTick < abortTick} })();
-	let lastActivityTick = system.currentTick;
+	let lastActivityTick = -1;
 	if (!startingLoc) {
 		startingLoc = scriptState.root ?? {x:0,z:0};
 	}
@@ -81,21 +78,18 @@ function* chunkGenerator(scriptState, startingLoc=null, event=null) {
 	world.sendMessage(`${colorCodePrefix.green}@ ${startingLoc.x} ${startingLoc.z}`)
 	world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested}`)
 	try {
-		
-		//  world.sendMessage(`${colorCodePrefix.info}dbg: ${scriptState.activeJob} ${scriptState.cancelRequested} ${i} ${system.currentTick}`)
 		let n = parseInt(scriptState.step) || 0;
 		let chunkToLoad = walkChunkTaxicab(scriptState);
+		world.sendMessage(`${colorCodePrefix.debug}starting step: ${n}\nchunkToLoad truthy ${chunkToLoad?true:false}`)
 		while(!scriptState.cancelRequested && chunkToLoad) {
-			// Check cancel flag every iteration
-			if (scriptState.cancelRequested) {
-				break;
-			}
 			let currentTick = system.currentTick;
+			if (scriptState.debug) {
+				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nchunkToLoad: ${JSON.stringify(chunkToLoad.value)}`)
+			}
 			// Simulated work (replace with real logic)
 			if (currentTick - lastActivityTick >= 60) {
 				chunkToLoad = chunkToLoad.next();
-			if (scriptState.debug) { popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\n${JSON.stringify(chunkToLoad.value)}`)}
-			n++;
+				n++;
 				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}#${n} ${colorCodePrefix.gold}@ ${currentTick}`);
 				// do action here
 				lastActivityTick = currentTick;
