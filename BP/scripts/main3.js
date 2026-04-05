@@ -1,4 +1,4 @@
-// import { system, world, Vector3 } from "@minecraft/server";
+import { system, world, Vector3 } from "@minecraft/server";
 
 const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
