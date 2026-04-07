@@ -56,104 +56,84 @@ const SCRIPT_STATE = {
 
 const chunkSize = 16;
 
-function* chunkGeneratorInterval(scriptState, startingLoc=null, event=null) {
-	if (!startingLoc) {
-		startingLoc = scriptState.root ?? {x:0,z:0};
+function* chunkGeneratorInterval(scriptState) {
+	if (scriptState.cancelRequested) {
+		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
+		return resetJobState(scriptState);
 	}
+	
 	scriptState.root = {
-		x:parseFloat((startingLoc.x).toFixed(2)), 
-		z: parseFloat((startingLoc.z).toFixed(2)),
+		x:(parseFloat(scriptState.root?.x)||0).toFixed(2), 
+		z:(parseFloat(scriptState.root?.z)||0).toFixed(2),
 	};
-	scriptState.step = parseInt(scriptState.step ?? 0) || 0;
-	scriptState.generator = walkChunkTaxicab(scriptState);
-	try {
-		world.sendMessage(`${colorCodePrefix.debug}starting root @ ${colorCodePrefix.green}${JSON.stringify(scriptState.root)}\n${colorCodePrefix.reset}starting step: ${colorCodePrefix.green}${scriptState.step}${colorCodePrefix.reset}`)
-		while(!chunkToLoad.done && !scriptState.cancelRequested) {
-			let currentTick = system.currentTick;
-			if (scriptState.debug) {
-				popupDisplay(event, scriptState, `tick: ${system.currentTick}\tlastTick: ${lastActivityTick}\nn: ${scriptState.step}`)
-			}
-			// action per tick here
-			if (currentTick - lastActivityTick >= INTERVAL_BETWEEN_ACTIONS) {
-				const chunk = chunkToLoad.next();
-				scriptState.step++;
-				world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk.value)}`);
-				// do action here
-				lastActivityTick = currentTick;
-			}
-			// Yield so the game doesn't freeze
-			yield;
-		}
-		if (scriptState.cancelRequested) {
-			world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
-			return resetJobState(scriptState);
-		}
-		
-	} catch (e) {
-		world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.error}Error occured during runtime!`);
-		world.sendMessage(`${colorCodePrefix.error}${e}`);
-		console.error(e);
+	scriptState.step = parseInt(scriptState.step) || 0;
+	if (scriptState.debug) {
+		popupDisplay(event, scriptState, `tick: ${system.currentTick}`)
 	}
-	world.sendMessage(`${colorCodePrefix.blue} ?????`)
-	return resetJobState(scriptState);
+	// action per tick here
+		const chunk = getChunkAtStep(scriptState, scriptState.step);
+		scriptState.step++;
+		world.sendMessage(`${colorCodePrefix.yellow}${scriptPrefix} ${colorCodePrefix.green}action #${scriptState.step} ${colorCodePrefix.gold}@ tick ${currentTick}》${JSON.stringify(chunk)}`);
+	// Yield so the game doesn't freeze
+	system.runTimeout(()=>{scriptState.activeJob = chunkGeneratorInterval(scriptState)}, INTERVAL_BETWEEN_ACTIONS);
 }
 
 
 function getChunkAtStep(scriptState, stepIndex) {
-    const center = scriptState.root;
-    const baseX = roundForChunkEdge(center.x);
-    const baseZ = roundForChunkEdge(center.z);
-
-    // Step 0 = center
-    if (stepIndex === 0) {
-        return { x: baseX, z: baseZ };
-    }
-
-    // ---- Find ring r ----
-    // Total points up to ring r: 1 + 2r(r+1)
-    let r = Math.floor((Math.sqrt(2 * stepIndex + 1) - 1) / 2);
-
-    // Ensure r is correct (fix boundary cases)
-    while (1 + 2 * r * (r + 1) <= stepIndex) r++;
-    while (1 + 2 * (r - 1) * r > stepIndex) r--;
-
-    // First index in this ring
-    const ringStart = 1 + 2 * (r - 1) * r;
-
-    const offset = stepIndex - ringStart; // 0 → 4r-1
-
-    const sideLen = r;
-
-    let x, z;
-
-    if (offset < sideLen) {
-        // Top-right edge
-        x = offset;
-        z = -r + offset;
-    } 
-    else if (offset < 2 * sideLen) {
-        // Bottom-right edge
-        const o = offset - sideLen;
-        x = r - o;
-        z = o;
-    } 
-    else if (offset < 3 * sideLen) {
-        // Bottom-left edge
-        const o = offset - 2 * sideLen;
-        x = -o;
-        z = r - o;
-    } 
-    else {
-        // Top-left edge
-        const o = offset - 3 * sideLen;
-        x = -r + o;
-        z = -o;
-    }
-
-    return {
-        x: baseX + x * chunkSize,
-        z: baseZ + z * chunkSize,
-    };
+	const center = scriptState.root;
+	const baseX = roundForChunkEdge(center.x);
+	const baseZ = roundForChunkEdge(center.z);
+	
+	// Step 0 = center
+	if (stepIndex === 0) {
+		return { x: baseX, z: baseZ };
+	}
+	
+	// ---- Find ring r ----
+	// Total points up to ring r: 1 + 2r(r+1)
+	let r = Math.floor((Math.sqrt(2 * stepIndex + 1) - 1) / 2);
+	
+	// Ensure r is correct (fix boundary cases)
+	while (1 + 2 * r * (r + 1) <= stepIndex) r++;
+	while (1 + 2 * (r - 1) * r > stepIndex) r--;
+	
+	// First index in this ring
+	const ringStart = 1 + 2 * (r - 1) * r;
+	
+	const offset = stepIndex - ringStart; // 0 → 4r-1
+	
+	const sideLen = r;
+	
+	let x, z;
+	
+	if (offset < sideLen) {
+		// Top-right edge
+		x = offset;
+		z = -r + offset;
+	} 
+	else if (offset < 2 * sideLen) {
+		// Bottom-right edge
+		const o = offset - sideLen;
+		x = r - o;
+		z = o;
+	} 
+	else if (offset < 3 * sideLen) {
+		// Bottom-left edge
+		const o = offset - 2 * sideLen;
+		x = -o;
+		z = r - o;
+	} 
+	else {
+		// Top-left edge
+		const o = offset - 3 * sideLen;
+		x = -r + o;
+		z = -o;
+	}
+	
+	return {
+		x: baseX + x * chunkSize,
+		z: baseZ + z * chunkSize,
+	};
 }
 function test_getChunkAtStep() {
 	const expected2d = [
@@ -178,18 +158,18 @@ function test_getChunkAtStep() {
 		[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
 		[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
 		[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
-	];
-	const expectedStep = {
-		"0":{"x":0,"z":0},"1":{"x":0,"z":-16},"2":{"x":16,"z":0},"3":{"x":0,"z":16},"4":{"x":-16,"z":0},"5":{"x":0,"z":-32},"6":{"x":16,"z":-16},"7":{"x":32,"z":0},"8":{"x":16,"z":16},"9":{"x":0,"z":32},"10":{"x":-16,"z":16},"11":{"x":-32,"z":0},"12":{"x":-16,"z":-16},"13":{"x":0,"z":-48},"14":{"x":16,"z":-32},"15":{"x":32,"z":-16},"16":{"x":48,"z":0},"17":{"x":32,"z":16},"18":{"x":16,"z":32},"19":{"x":0,"z":48},"20":{"x":-16,"z":32},"21":{"x":-32,"z":16},"22":{"x":-48,"z":0},"23":{"x":-32,"z":-16},"24":{"x":-16,"z":-32},"25":{"x":0,"z":-64},"26":{"x":16,"z":-48},"27":{"x":32,"z":-32},"28":{"x":48,"z":-16},"29":{"x":64,"z":0},"30":{"x":48,"z":16},"31":{"x":32,"z":32},"32":{"x":16,"z":48},"33":{"x":0,"z":64},"34":{"x":-16,"z":48},"35":{"x":-32,"z":32},"36":{"x":-48,"z":16},"37":{"x":-64,"z":0},"38":{"x":-48,"z":-16},"39":{"x":-32,"z":-32},"40":{"x":-16,"z":-48},"41":{"x":0,"z":-80},"42":{"x":16,"z":-64},"43":{"x":32,"z":-48},"44":{"x":48,"z":-32},"45":{"x":64,"z":-16},"46":{"x":80,"z":0},"47":{"x":64,"z":16},"48":{"x":48,"z":32},"49":{"x":32,"z":48},"50":{"x":16,"z":64},"51":{"x":0,"z":80},"52":{"x":-16,"z":64},"53":{"x":-32,"z":48},"54":{"x":-48,"z":32},"55":{"x":-64,"z":16},"56":{"x":-80,"z":0},"57":{"x":-64,"z":-16},"58":{"x":-48,"z":-32},"59":{"x":-32,"z":-48},"60":{"x":-16,"z":-64},"61":{"x":0,"z":-96},"62":{"x":16,"z":-80},"63":{"x":32,"z":-64},"64":{"x":48,"z":-48},"65":{"x":64,"z":-32},"66":{"x":80,"z":-16},"67":{"x":96,"z":0},"68":{"x":80,"z":16},"69":{"x":64,"z":32},"70":{"x":48,"z":48},"71":{"x":32,"z":64},"72":{"x":16,"z":80},"73":{"x":0,"z":96},"74":{"x":-16,"z":80},"75":{"x":-32,"z":64},"76":{"x":-48,"z":48},"77":{"x":-64,"z":32},"78":{"x":-80,"z":16},"79":{"x":-96,"z":0},"80":{"x":-80,"z":-16},"81":{"x":-64,"z":-32},"82":{"x":-48,"z":-48},"83":{"x":-32,"z":-64},"84":{"x":-16,"z":-80},"85":{"x":0,"z":-112},"86":{"x":16,"z":-96},"87":{"x":32,"z":-80},"88":{"x":48,"z":-64},"89":{"x":64,"z":-48},"90":{"x":80,"z":-32},"91":{"x":96,"z":-16},"92":{"x":112,"z":0},"93":{"x":96,"z":16},"94":{"x":80,"z":32},"95":{"x":64,"z":48},"96":{"x":48,"z":64},"97":{"x":32,"z":80},"98":{"x":16,"z":96},"99":{"x":0,"z":112}
+		];
+		const expectedStep = {
+			"0":{"x":0,"z":0},"1":{"x":0,"z":-16},"2":{"x":16,"z":0},"3":{"x":0,"z":16},"4":{"x":-16,"z":0},"5":{"x":0,"z":-32},"6":{"x":16,"z":-16},"7":{"x":32,"z":0},"8":{"x":16,"z":16},"9":{"x":0,"z":32},"10":{"x":-16,"z":16},"11":{"x":-32,"z":0},"12":{"x":-16,"z":-16},"13":{"x":0,"z":-48},"14":{"x":16,"z":-32},"15":{"x":32,"z":-16},"16":{"x":48,"z":0},"17":{"x":32,"z":16},"18":{"x":16,"z":32},"19":{"x":0,"z":48},"20":{"x":-16,"z":32},"21":{"x":-32,"z":16},"22":{"x":-48,"z":0},"23":{"x":-32,"z":-16},"24":{"x":-16,"z":-32},"25":{"x":0,"z":-64},"26":{"x":16,"z":-48},"27":{"x":32,"z":-32},"28":{"x":48,"z":-16},"29":{"x":64,"z":0},"30":{"x":48,"z":16},"31":{"x":32,"z":32},"32":{"x":16,"z":48},"33":{"x":0,"z":64},"34":{"x":-16,"z":48},"35":{"x":-32,"z":32},"36":{"x":-48,"z":16},"37":{"x":-64,"z":0},"38":{"x":-48,"z":-16},"39":{"x":-32,"z":-32},"40":{"x":-16,"z":-48},"41":{"x":0,"z":-80},"42":{"x":16,"z":-64},"43":{"x":32,"z":-48},"44":{"x":48,"z":-32},"45":{"x":64,"z":-16},"46":{"x":80,"z":0},"47":{"x":64,"z":16},"48":{"x":48,"z":32},"49":{"x":32,"z":48},"50":{"x":16,"z":64},"51":{"x":0,"z":80},"52":{"x":-16,"z":64},"53":{"x":-32,"z":48},"54":{"x":-48,"z":32},"55":{"x":-64,"z":16},"56":{"x":-80,"z":0},"57":{"x":-64,"z":-16},"58":{"x":-48,"z":-32},"59":{"x":-32,"z":-48},"60":{"x":-16,"z":-64},"61":{"x":0,"z":-96},"62":{"x":16,"z":-80},"63":{"x":32,"z":-64},"64":{"x":48,"z":-48},"65":{"x":64,"z":-32},"66":{"x":80,"z":-16},"67":{"x":96,"z":0},"68":{"x":80,"z":16},"69":{"x":64,"z":32},"70":{"x":48,"z":48},"71":{"x":32,"z":64},"72":{"x":16,"z":80},"73":{"x":0,"z":96},"74":{"x":-16,"z":80},"75":{"x":-32,"z":64},"76":{"x":-48,"z":48},"77":{"x":-64,"z":32},"78":{"x":-80,"z":16},"79":{"x":-96,"z":0},"80":{"x":-80,"z":-16},"81":{"x":-64,"z":-32},"82":{"x":-48,"z":-48},"83":{"x":-32,"z":-64},"84":{"x":-16,"z":-80},"85":{"x":0,"z":-112},"86":{"x":16,"z":-96},"87":{"x":32,"z":-80},"88":{"x":48,"z":-64},"89":{"x":64,"z":-48},"90":{"x":80,"z":-32},"91":{"x":96,"z":-16},"92":{"x":112,"z":0},"93":{"x":96,"z":16},"94":{"x":80,"z":32},"95":{"x":64,"z":48},"96":{"x":48,"z":64},"97":{"x":32,"z":80},"98":{"x":16,"z":96},"99":{"x":0,"z":112}
 		};
-	const actual = Object.entries(expectedStep).reduce((acc, [k,v]) => {acc[k]=getChunkAtStep({
-	activeJob: 1,
-	cancelRequested: false,
-	debug: false,
-	root: {x:0, z:0},
-}, parseInt(k)); if (JSON.stringify(acc[k])!=JSON.stringify(v)){console.log(k, acc[k], v)} return acc;}, {})
+		const actual = Object.entries(expectedStep).reduce((acc, [k,v]) => {acc[k]=getChunkAtStep({
+			activeJob: 1,
+			cancelRequested: false,
+			debug: false,
+			root: {x:0, z:0},
+		}, parseInt(k)); if (JSON.stringify(acc[k])!=JSON.stringify(v)){console.log(k, acc[k], v)} return acc;}, {})
 }
-							
+
 /**
 * Example generator job
 * This simulates chunk generation work over time
@@ -330,7 +310,7 @@ function startJob(event, scriptState) {
 	const startingLoc = event?.sourceEntity?.location;
 	scriptState.root = {x:startingLoc.x, z: startingLoc.z};
 	scriptState.step = 0;
-	const job = chunkGenerator(scriptState, startingLoc, event);
+	const job = ()=>chunkGeneratorInterval(scriptState);
 	scriptState.activeJob = system.runJob(job);
 	
 	world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started id: ${scriptState.activeJob}`);
@@ -494,6 +474,7 @@ function createMockMinecraft() {
 	let currentTick = 0;
 	let nextJobId = 1;
 	const jobs = new Map();
+	const timeouts = [];
 	
 	const system = {
 		get currentTick() {
@@ -505,7 +486,14 @@ function createMockMinecraft() {
 			jobs.set(id, gen);
 			return id;
 		},
-		
+		runTimeout(callback, delayTicks = 0) {
+      const runAt = currentTick + Math.max(0, delayTicks);
+
+      timeouts.push({
+        runAt,
+        callback
+      });
+    },
 		clearJob(id) {
 			jobs.delete(id);
 		},
@@ -529,16 +517,39 @@ function createMockMinecraft() {
 	};
 	
 	function tick(n = 1) {
-		for (let i = 0; i < n; i++) {
-			currentTick++;
-			
-			for (const [id, job] of [...jobs]) {
-				const res = job.next();
-				if (res.done) {
-					jobs.delete(id);
-				}
-			}
-		}
+    for (let i = 0; i < n; i++) {
+      currentTick++;
+
+      // ---- RUN TIMEOUTS ----
+
+      for (let j = timeouts.length - 1; j >= 0; j--) {
+        if (timeouts[j].runAt <= currentTick) {
+          try {
+            timeouts[j].callback();
+          } catch (e) {
+            console.error("Timeout error:", e);
+          }
+
+          timeouts.splice(j, 1);
+        }
+      }
+
+      // ---- RUN JOBS ----
+
+      for (const [id, job] of [...jobs]) {
+        try {
+          const res = job.next();
+
+          if (res.done) {
+            jobs.delete(id);
+          }
+
+        } catch (e) {
+          console.error("Job error:", e);
+          jobs.delete(id);
+        }
+      }
+    }
 	}
 	
 	function fireScriptEvent(id, sourceEntity = null) {
