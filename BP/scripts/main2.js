@@ -62,14 +62,17 @@ function* chunkGeneratorInterval(scriptState) {
 		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
 		return resetJobState(scriptState);
 	}
+	world.sendMessage(0)
 	scriptState.root = {
 		x:parseFloat((parseFloat(scriptState?.root?.x)||0).toFixed(2)), 
 		z:parseFloat((parseFloat(scriptState?.root?.z)||0).toFixed(2)),
 	};
 	scriptState.step = parseInt(scriptState?.step) || 0;
+	world.sendMessage(1)
 	if (scriptState.debug) {
 		popupDisplay(event, scriptState, `tick: ${system.currentTick}`)
 	}
+	world.sendMessage(2)
 	// action per tick here
 	const chunk = getChunkAtStep(scriptState.root.x, scriptState.root.z, scriptState.step);
 	world.sendMessage(JSON.stringify (chunk))
