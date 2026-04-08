@@ -83,6 +83,7 @@ function chunkGeneratorInterval(scriptState) {
 	
 	// Yield so the game doesn't freeze
 	scriptState.activeJob = system.runTimeout(()=>{
+		world.sendMessage("nested scriptState is" + typeof(scriptState))
 		 chunkGeneratorInterval(scriptState);
 	}, INTERVAL_BETWEEN_ACTIONS);
 	world.sendMessage(`${colorCodePrefix.info}R ${scriptPrefix} #${scriptState.step-1} @T ${system.currentTick}=${JSON.stringify(chunk)}\n${colorCodePrefix.info}Q ${scriptPrefix} #${scriptState.step} @T ${system.currentTick + INTERVAL_BETWEEN_ACTIONS} (+${(INTERVAL_BETWEEN_ACTIONS/20).toFixed(2).replace(/\.00$|0$/gmi, "")}s)`);
