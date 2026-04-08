@@ -78,12 +78,10 @@ function chunkGeneratorInterval(scriptState) {
 	world.sendMessage("got chunk ok")
 	world.sendMessage(JSON.stringify (chunk))
 	scriptState.step++;
-	world.sendMessage("inc step ok" + scriptState.step)
 	// @todo: do something with chunk coords here
 	
 	// Yield so the game doesn't freeze
 	scriptState.activeJob = system.runTimeout(()=>{
-		world.sendMessage("nested scriptState is" + typeof(scriptState))
 		 chunkGeneratorInterval(scriptState);
 	}, INTERVAL_BETWEEN_ACTIONS);
 	world.sendMessage(`${colorCodePrefix.info}R ${scriptPrefix} #${scriptState.step-1} @T ${system.currentTick}=${JSON.stringify(chunk)}\n${colorCodePrefix.info}Q ${scriptPrefix} #${scriptState.step} @T ${system.currentTick + INTERVAL_BETWEEN_ACTIONS} (+${(INTERVAL_BETWEEN_ACTIONS/20).toFixed(2).replace(/\.00$|0$/gmi, "")}s)`);
@@ -334,3 +332,48 @@ const jobHandler = {
 
 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
+/*
+function test_getChunkAtStep2() {
+	// debug walker code
+	n=61
+	radius = Math.ceil(Math.sqrt(n));
+	size = radius * 2 + 1;
+	arr = new Array(size)
+	.fill(null)
+	.map(() => new Array(size).fill(null));
+	const scriptState = Object.entries(SCRIPT_STATE).reduce((acc, [k,v])=> {acc[k]=v; return acc;}, {});
+	scriptState.activeJob = 1;
+	scriptState.cancelRequested = false;
+	scriptState.root = {x:n/12 ,z:n/12};
+	scriptState.step = 0;
+	offset = Math.ceil(Math.ceil(radius) / 2) +2;
+	k={};
+	//console.log(123,scriptState, arr)
+	for (let i=0; i<n; ++i) { 
+		b={value:getChunkAtStep(scriptState.root.x, scriptState.root.z, i )}
+		console.log(i, b.value.x,b.value.z)
+		const gridX = Math.floor(b.value.x / chunkSize) + offset;
+		const gridZ = Math.floor(b.value.z / chunkSize) + offset;
+		k[i]={x:b.value.x, z:b.value.z};
+		if (arr[gridX] && arr[gridX][gridZ] !== undefined) {
+			arr[gridX][gridZ] = i;
+		} else {
+			console.warn(i, gridX, gridZ, b.value.x, b.value.z)
+		}
+	}
+	const colSep = "\t"
+	ret=arr.map(r=>r.join(colSep)).join("\n")
+	ret = ret.replaceAll(new RegExp(`^${colSep}*\n|\n*${colSep}*$`, "gmi"), "")
+	let pre = Math.min(...ret.split("\n").map(line=>(line.match(new RegExp(`^${colSep}*`, "gmi")) ?? [""])[0]?.length ?? 0))
+	ret = ret.replaceAll(new RegExp(`^${colSep}{${pre}}(.*?)${colSep}*$`, "gmi"), "$1")
+	console.log (ret)
+	return JSON.stringify (k)
+}
+world  = {
+	sendMessage() {
+		console.log("SENDMESSAGE:", ...arguments)
+	}
+}
+test_getChunkAtStep()
+test_getChunkAtStep2()
+*/
