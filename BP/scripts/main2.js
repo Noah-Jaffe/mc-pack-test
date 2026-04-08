@@ -56,7 +56,7 @@ const SCRIPT_STATE = {
 
 const chunkSize = 16;
 
-function* chunkGeneratorInterval(scriptState) {
+function chunkGeneratorInterval(scriptState) {
 	world.sendMessage(`${colorCodePrefix.info}>${scriptPrefix}: #${scriptState?.step} @T ${system.currentTick}`);
 	if (scriptState.cancelRequested) {
 		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
@@ -70,7 +70,7 @@ function* chunkGeneratorInterval(scriptState) {
 	scriptState.step = parseInt(scriptState?.step) || 0;
 	world.sendMessage(1)
 	if (scriptState.debug) {
-		popupDisplay(event, scriptState, `tick: ${system.currentTick}`)
+		popupDisplay(null, scriptState, `tick: ${system.currentTick}`)
 	}
 	world.sendMessage(2)
 	// action per tick here
@@ -80,9 +80,8 @@ function* chunkGeneratorInterval(scriptState) {
 	// @todo: do something with chunk coords here
 	
 	// Yield so the game doesn't freeze
-	system.runTimeout(()=>{
-		const job = chunkGeneratorInterval(scriptState);
-		scriptState.activeJob = system.runJob(job);
+	scriptState.activeJob = system.runTimeout(()=>{
+		 chunkGeneratorInterval(scriptState);
 	}, INTERVAL_BETWEEN_ACTIONS);
 	world.sendMessage(`${colorCodePrefix.info}R ${scriptPrefix} #${scriptState.step-1} @T ${system.currentTick}=${JSON.stringify(chunk)}\n${colorCodePrefix.info}Q ${scriptPrefix} #${scriptState.step} @T ${system.currentTick + INTERVAL_BETWEEN_ACTIONS} (+${(INTERVAL_BETWEEN_ACTIONS/20).toFixed(2).replace(/\.00$|0$/gmi, "")}s)`);
 }
@@ -203,8 +202,9 @@ function startJob(event, scriptState) {
 	const startingLoc = event?.sourceEntity?.location;
 	scriptState.root = {x:startingLoc.x, z: startingLoc.z};
 	scriptState.step = 0;
-	const job = chunkGeneratorInterval(scriptState);
-	scriptState.activeJob = system.runJob(job);
+	scriptState.activeJob = system.runTimeout(()=>{
+		 chunkGeneratorInterval(scriptState);
+	}, 1);
 	
 	world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started id: ${scriptState.activeJob}`);
 }
