@@ -62,21 +62,23 @@ function chunkGeneratorInterval(scriptState) {
 		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
 		return resetJobState(scriptState);
 	}
-	world.sendMessage("0")
 	scriptState.root = {
 		x:parseFloat((parseFloat(scriptState?.root?.x)||0).toFixed(2)), 
 		z:parseFloat((parseFloat(scriptState?.root?.z)||0).toFixed(2)),
 	};
 	scriptState.step = parseInt(scriptState?.step) || 0;
-	world.sendMessage("1")
 	if (scriptState.debug) {
-		popupDisplay(null, scriptState, `tick: ${system.currentTick}`)
+		//popupDisplay(null, scriptState, `tick: ${system.currentTick}`)
+		world.sendMessage(JSON.debugStringify(scriptState))
+		world.sendMessage("debugStringify ok")
 	}
-	world.sendMessage("2")
+	world.sendMessage("getchunk?")
 	// action per tick here
-	const chunk = getChunkAtStep(scriptState.root.x, scriptState.root.z, scriptState.step);
+	const chunk = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
+	world.sendMessage("got chunk ok")
 	world.sendMessage(JSON.stringify (chunk))
 	scriptState.step++;
+	world.sendMessage("inc step ok" + scriptState.step)
 	// @todo: do something with chunk coords here
 	
 	// Yield so the game doesn't freeze
