@@ -66,7 +66,7 @@ function startInterval(event, scriptState) {
 	scriptState.step = 0;
 	scriptState.kill = ()=>{};
 	const locator = walkChunkTaxicab(scriptState);
-	scriptState.exe = system.setInterval(() => {
+	scriptState.exe = system.runInterval(() => {
 		if (scriptState.cancelRequested) {
 			// abort if needed
 			world.sendMessage(`KILLED ACTIVE SCRIPT ${JSON.stringify(scriptState)}`);
