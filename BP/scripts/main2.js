@@ -72,6 +72,7 @@ function* chunkGeneratorInterval(scriptState) {
 	}
 	// action per tick here
 	const chunk = getChunkAtStep(scriptState.root.x, scriptState.root.z, scriptState.step);
+	world.sendMessage(JSON.stringify (chunk))
 	scriptState.step++;
 	// @todo: do something with chunk coords here
 	
@@ -89,7 +90,9 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	
 	// Step 0 = center
 	if (stepIndex === 0) {
-		return { x: baseX, z: baseZ };
+		let ret = { x: baseX, z: baseZ };
+		if (scriptState.debug) { world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`) } 
+		return ret;
 	}
 	
 	// ---- Find ring r ----
@@ -133,10 +136,12 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		z = -o;
 	}
 	
-	return {
+	ret = {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
+	if (scriptState.debug) { world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`) } 
+	return ret;
 }
 function test_getChunkAtStep() {
 	const expected2d = [
