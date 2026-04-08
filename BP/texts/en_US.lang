@@ -1,2 +1,2 @@
-pack.name=genChunk
+pack.name=chunkGen
 pack.description=Pregenerate all the chunks! §2 _BUILD_DATE_ §r
