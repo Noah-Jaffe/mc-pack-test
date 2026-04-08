@@ -62,17 +62,17 @@ function chunkGeneratorInterval(scriptState) {
 		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
 		return resetJobState(scriptState);
 	}
-	world.sendMessage(0)
+	world.sendMessage("0")
 	scriptState.root = {
 		x:parseFloat((parseFloat(scriptState?.root?.x)||0).toFixed(2)), 
 		z:parseFloat((parseFloat(scriptState?.root?.z)||0).toFixed(2)),
 	};
 	scriptState.step = parseInt(scriptState?.step) || 0;
-	world.sendMessage(1)
+	world.sendMessage("1")
 	if (scriptState.debug) {
 		popupDisplay(null, scriptState, `tick: ${system.currentTick}`)
 	}
-	world.sendMessage(2)
+	world.sendMessage("2")
 	// action per tick here
 	const chunk = getChunkAtStep(scriptState.root.x, scriptState.root.z, scriptState.step);
 	world.sendMessage(JSON.stringify (chunk))
@@ -93,7 +93,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	// Step 0 = center
 	if (stepIndex === 0) {
 		let ret = { x: baseX, z: baseZ };
-		if (scriptState.debug) { world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`) } 
+		world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 		return ret;
 	}
 	
@@ -142,7 +142,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
-	if (scriptState.debug) { world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`) } 
+	world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
 function test_getChunkAtStep() {
