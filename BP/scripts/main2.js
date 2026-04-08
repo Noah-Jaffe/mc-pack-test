@@ -72,7 +72,7 @@ function chunkGeneratorInterval(scriptState) {
 		world.sendMessage(JSON.debugStringify(scriptState))
 		world.sendMessage("debugStringify ok")
 	}
-	world.sendMessage("getchunk?")
+	world.sendMessage(`getchunk? ${[scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState?.step]}`)
 	// action per tick here
 	const chunk = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
 	world.sendMessage("got chunk ok")
@@ -260,7 +260,7 @@ function popupDisplay(event, scriptState) {
 	
 	try {
 		lines.push(`${colorCodePrefix.blue}SCRIPTSTATE:`)
-		let js = JSON.debugSringify(scriptState)
+		let js = JSON.debugStringify(scriptState)
 		js.replaceAll(/^{\n|\n}$/gmi,"").split('\n').forEach(e=> lines.push(`${colorCodePrefix.debug}${e}`));
 	} catch {
 		lines.push(`${colorCodePrefix.error}Failed to format scriptState data`)
