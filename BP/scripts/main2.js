@@ -76,7 +76,10 @@ function* chunkGeneratorInterval(scriptState) {
 	// @todo: do something with chunk coords here
 	
 	// Yield so the game doesn't freeze
-	system.runTimeout(()=>{scriptState.activeJob = chunkGeneratorInterval(scriptState)}, INTERVAL_BETWEEN_ACTIONS);
+	system.runTimeout(()=>{
+		const job = chunkGeneratorInterval(scriptState);
+		scriptState.activeJob = system.runJob(job);
+	}, INTERVAL_BETWEEN_ACTIONS);
 	world.sendMessage(`${colorCodePrefix.info}R ${scriptPrefix} #${scriptState.step-1} @T ${system.currentTick}=${JSON.stringify(chunk)}\n${colorCodePrefix.info}Q ${scriptPrefix} #${scriptState.step} @T ${system.currentTick + INTERVAL_BETWEEN_ACTIONS} (+${(INTERVAL_BETWEEN_ACTIONS/20).toFixed(2).replace(/\.00$|0$/gmi, "")}s)`);
 }
 
@@ -192,7 +195,7 @@ function startJob(event, scriptState) {
 	const startingLoc = event?.sourceEntity?.location;
 	scriptState.root = {x:startingLoc.x, z: startingLoc.z};
 	scriptState.step = 0;
-	const job = ()=>chunkGeneratorInterval(scriptState);
+	const job = chunkGeneratorInterval(scriptState);
 	scriptState.activeJob = system.runJob(job);
 	
 	world.sendMessage(`${colorCodePrefix.warning}${scriptPrefix} started id: ${scriptState.activeJob}`);
