@@ -184,7 +184,7 @@ function startLoop(event, scriptState) {
 }
 
 function dbgCmd(event, scriptState){
-	world.sendMessage({translate: "pack.description"})
+	world.sendMessage({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
 }
 
 const jobHandler = {
