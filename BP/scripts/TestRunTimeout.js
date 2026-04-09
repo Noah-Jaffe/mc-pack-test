@@ -155,19 +155,16 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	return ret;
 }
 function repeatableLoop(scriptState){
-	//scriptState.debug(`${dbgPrefix()}repeatable`);
-	if (typeof scriptState.debug == "undefined") {
-		scriptState.debug = world.sendMessage ?? defaultDebug;
-	}
-	scriptState.debug(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
+	//world.sendMessage(`${dbgPrefix()}repeatable`);
+	world.sendMessage(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
-	scriptState.debug(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	world.sendMessage(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
 	scriptState.id=system.runTimeout(()=>{
-		scriptState.debug(`${dbgPrefix()}repeatable loop inner timeout running`);
+		world.sendMessage(`${dbgPrefix()}repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
 	}, 10);
 	scriptState.step++;
-	scriptState.debug(`${dbgPrefix()}Queued for step ${scriptState.step}`);
+	world.sendMessage(`${dbgPrefix()}Queued for step ${scriptState.step}`);
 }
 function dbgPrefix() {
 	return `${colorCodePrefix.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${colorCodePrefix.blue}(${colorCodePrefix.yellow}${system.currentTick}${colorCodePrefix.blue})${colorCodePrefix.reset}:`;
@@ -175,10 +172,9 @@ function dbgPrefix() {
 function startLoop(event, scriptState) {
 	scriptState.step = 0;
 	scriptState.root = {x:0, z:0};
-	scriptState.debug = world.sendMessage;
-	scriptState.debug(`${dbgPrefix()}Queued start of loop`);
+	world.sendMessage(`${dbgPrefix()}Queued start of loop`);
 	scriptState.id=system.runTimeout(()=>{
-		scriptState.debug(`${dbgPrefix()}starting loop inner timeout running`);
+		world.sendMessage(`${dbgPrefix()}starting loop inner timeout running`);
 		repeatableLoop(scriptState)
 	}, 1);
 }
@@ -360,5 +356,4 @@ sim.tick(25); // simulate ticks
 
 */
 
-const defaultDebug = typeof world ? world?.sendMessage : console.log;
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
