@@ -219,7 +219,7 @@ function recognizeMyEvents(event) {
 		try {
 			jobHandler[event.id](event, SCRIPT_STATE);
 		} catch (e) {
-			world.sendMessage(`${colorCodePrefix.error}Error in: ${event.id}`);
+			world.sendMessage(`${colorCodePrefix.error}Error in: ${event.id} ${colorCodePrefix.dark_purple}[${system.scriptVersion}]`);
 			world.sendMessage(`${colorCodePrefix.error}${e}`);
 			console.error(e);
 		}
