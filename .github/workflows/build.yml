@@ -2,9 +2,9 @@ name: Build and Release MCAddon
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '**.js'
+  # push:
+  #   paths:
+  #     - '**.js'
 
 
 jobs:
