@@ -155,6 +155,9 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 }
 function repeatableLoop(scriptState){
 	//scriptState.debug(`${dbgPrefix()}repeatable`);
+	if (typeof scriptState.debug == "undefined") {
+		scriptState.debug = world?.getPlayers()[0].onScreenDisplay.setActionBar ?? defaultDebug;
+	}
 	scriptState.debug(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
 	scriptState.debug(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
@@ -171,7 +174,7 @@ function dbgPrefix() {
 function startLoop(event, scriptState) {
 	scriptState.step = 0;
 	scriptState.root = {x:0, z:0};
-	scriptState.debug = event.sourceEntity?.onScreenDisplay?.setActionBar ?? defaultDebug;
+	scriptState.debug = event.sourceEntity?.onScreenDisplay?.setActionBar ?? world?.getPlayers()[0].onScreenDisplay.setActionBar ?? defaultDebug;
 	scriptState.debug(`${dbgPrefix()}Queued start of loop`);
 	scriptState.id=system.runTimeout(()=>{
 		scriptState.debug(`${dbgPrefix()}starting loop inner timeout running`);
