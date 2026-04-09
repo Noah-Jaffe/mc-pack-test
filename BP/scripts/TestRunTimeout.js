@@ -1,6 +1,7 @@
 "use strict";
 import { system, world, Vector3 } from "@minecraft/server";
 
+
 const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
@@ -182,8 +183,13 @@ function startLoop(event, scriptState) {
 	}, 1);
 }
 
+function dbgCmd(event, scriptState){
+	world.sendMessage({translate: "pack.description"})
+}
+
 const jobHandler = {
 	[startJobId]: startLoop,
+	[debugJobId]: dbgCmd,
 }
 JSON.debugStringify = (node) => {
 	let root = true;
