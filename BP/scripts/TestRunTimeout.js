@@ -1,5 +1,5 @@
 "use strict";
-//import { system, world, Vector3 } from "@minecraft/server";
+import { system, world, Vector3 } from "@minecraft/server";
 
 const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
@@ -225,7 +225,7 @@ function recognizeMyEvents(event) {
 	
 }
 
-// /*
+/*
 function createMockMinecraft() {
 	let currentTick = 0;
 	let nextJobId = 1;
@@ -349,7 +349,7 @@ sim.fireScriptEvent("chunkGen:start");
 // Run game loop
 sim.tick(25); // simulate ticks
 
-// */
+*/
 
 const defaultDebug = typeof world ? world?.sendMessage : console.log;
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
