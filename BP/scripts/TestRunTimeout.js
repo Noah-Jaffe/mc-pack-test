@@ -55,14 +55,15 @@ const SCRIPT_STATE = {
 	lastTick: null,
 	debug: true,
 }
-const debugPrint() {
+const chunkSize = 16;
+
+function debugPrint() {
 	if (SCRIPT_STATE.debug) {
 		world.sendMessage(...arguments);
 	} else {
 		console.log(...arguments);
 	}
 }
-const chunkSize = 16;
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
