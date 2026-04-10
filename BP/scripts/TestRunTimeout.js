@@ -57,36 +57,6 @@ const SCRIPT_STATE = {
 
 const chunkSize = 16;
 
-function chunkGeneratorInterval(scriptState) {
-	world.sendMessage(`${colorCodePrefix.info}>${scriptPrefix}: #${scriptState?.step} @T ${system.currentTick}`);
-	if (scriptState.cancelRequested) {
-		world.sendMessage(`${colorCodePrefix.warning}: abort flag recognized!`);
-		return resetJobState(scriptState);
-	}
-	scriptState.root = {
-		x:parseFloat((parseFloat(scriptState?.root?.x)||0).toFixed(2)), 
-		z:parseFloat((parseFloat(scriptState?.root?.z)||0).toFixed(2)),
-	};
-	scriptState.step = parseInt(scriptState?.step) || 0;
-	if (scriptState.debug) {
-		//popupDisplay(null, scriptState, `tick: ${system.currentTick}`)
-		world.sendMessage(JSON.debugStringify(scriptState))
-		world.sendMessage("debugStringify ok")
-	}
-	world.sendMessage(`getchunk? ${[scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState?.step]}`)
-	// action per tick here
-	const chunk = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
-	world.sendMessage("got chunk ok")
-	world.sendMessage(JSON.stringify (chunk))
-	scriptState.step++;
-	// @todo: do something with chunk coords here
-	
-	// Yield so the game doesn't freeze
-	scriptState.activeJob = system.runTimeout(()=>{
-		chunkGeneratorInterval(scriptState);
-	}, INTERVAL_BETWEEN_ACTIONS);
-	world.sendMessage(`${colorCodePrefix.info}R ${scriptPrefix} #${scriptState.step-1} @T ${system.currentTick}=${JSON.stringify(chunk)}\n${colorCodePrefix.info}Q ${scriptPrefix} #${scriptState.step} @T ${system.currentTick + INTERVAL_BETWEEN_ACTIONS} (+${(INTERVAL_BETWEEN_ACTIONS/20).toFixed(2).replace(/\.00$|0$/gmi, "")}s)`);
-}
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
@@ -157,6 +127,13 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 function repeatableLoop(scriptState){
 	//world.sendMessage(`${dbgPrefix()}repeatable`);
 	world.sendMessage(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
+	if (scriptState.cancelRequested) {
+		// abort loop enacted
+		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.step)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
+		scriptState.cancelRequested = null;
+		scriptState.id = null;
+		return;
+	}
 	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
 	world.sendMessage(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
 	scriptState.id=system.runTimeout(()=>{
@@ -178,6 +155,14 @@ function startLoop(event, scriptState) {
 		repeatableLoop(scriptState)
 	}, 1);
 }
+function stopLoop(event, scriptState) {
+	if (scriptState.id == null){
+		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}No active ${scriptPrefix} running!\nTo start one, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}`)
+		return;
+	}
+	scriptState.cancelRequested = true;
+	world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Raised the ${scriptPrefix} stop flag!`)
+}
 
 function dbgCmd(event, scriptState){
 	world.sendMessage({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
@@ -185,7 +170,9 @@ function dbgCmd(event, scriptState){
 
 const jobHandler = {
 	[startJobId]: startLoop,
+	[stopJobId]: stopLoop,
 	[debugJobId]: dbgCmd,
+	
 }
 JSON.debugStringify = (node) => {
 	let root = true;
