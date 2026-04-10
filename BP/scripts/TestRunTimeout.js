@@ -6,7 +6,7 @@ const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:dbg`;
-const INTERVAL_BETWEEN_ACTIONS = 60;
+const INTERVAL_BETWEEN_ACTIONS = 20;
 const colorCodePrefix = {
 	"black": "§0",
 	"dark_blue": "§1",
@@ -53,10 +53,16 @@ const SCRIPT_STATE = {
 	root: null,
 	lastCoords: null,
 	lastTick: null,
+	debug: true,
 }
-
+const debugPrint() {
+	if (SCRIPT_STATE.debug) {
+		world.sendMessage(...arguments);
+	} else {
+		console.log(...arguments);
+	}
+}
 const chunkSize = 16;
-
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
@@ -72,7 +78,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	// Step 0 = center
 	if (stepIndex === 0) {
 		let ret = { x: baseX, z: baseZ };
-		world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+		debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 		return ret;
 	}
 	
@@ -121,37 +127,51 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
-	world.sendMessage(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+	debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
 function repeatableLoop(scriptState){
-	//world.sendMessage(`${dbgPrefix()}repeatable`);
-	world.sendMessage(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
+	//debugPrint(`${dbgPrefix()}repeatable`);
+	debugPrint(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
-		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.step)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
+		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.lastCoords)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
 		scriptState.cancelRequested = null;
 		scriptState.id = null;
 		return;
 	}
 	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
-	world.sendMessage(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	debugPrint(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	// save persistent successful state
+	scriptState.lastTick = system.currentTick;
+	scriptState.lastCoords = myActivity;
 	scriptState.id=system.runTimeout(()=>{
-		world.sendMessage(`${dbgPrefix()}repeatable loop inner timeout running`);
+		debugPrint(`${dbgPrefix()}repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
-	}, 10);
+	}, INTERVAL_BETWEEN_ACTIONS);
 	scriptState.step++;
-	world.sendMessage(`${dbgPrefix()}Queued for step ${scriptState.step}`);
+	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
 }
 function dbgPrefix() {
 	return `${colorCodePrefix.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${colorCodePrefix.blue}(${colorCodePrefix.yellow}${system.currentTick}${colorCodePrefix.blue})${colorCodePrefix.reset}:`;
 }
 function startLoop(event, scriptState) {
-	scriptState.step = 0;
-	scriptState.root = {x:0, z:0};
-	world.sendMessage(`${dbgPrefix()}Queued start of loop`);
+	// @todo read event.message for the custom args
+	if (scriptState.cancelRequested && scriptState.id != null) {
+		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) is in the process of aborting, please wait and try again!!`);
+		return null;
+	}
+	if (scriptState.root != null && scriptState.step> 10) {
+		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.green}RESUMING FROM PREVIOUS STATE ${colorCodePrefix.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
+	} else {
+		scriptState.step = 0;
+		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
+		scriptState.root = {x:startingLoc.x, z: startingLoc.z};
+		scriptState.cancelRequested = null;
+	}
+	debugPrint(`${dbgPrefix()}Queued start of loop`);
 	scriptState.id=system.runTimeout(()=>{
-		world.sendMessage(`${dbgPrefix()}starting loop inner timeout running`);
+		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
 		repeatableLoop(scriptState)
 	}, 1);
 }
@@ -165,7 +185,7 @@ function stopLoop(event, scriptState) {
 }
 
 function dbgCmd(event, scriptState){
-	world.sendMessage({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
+	debugPrint({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
 }
 
 const jobHandler = {
@@ -204,15 +224,15 @@ JSON.debugStringify = (node) => {
 function recognizeMyEvents(event) {
 	
 	if (event.id in jobHandler) {
-		world.sendMessage(`${colorCodePrefix.info}Attempting to start: ${colorCodePrefix.green}${event.id}`)
+		debugPrint(`${colorCodePrefix.info}Attempting to start: ${colorCodePrefix.green}${event.id}`)
 		try {
 			jobHandler[event.id](event, SCRIPT_STATE);
 		} catch (e) {
-			world.sendMessage(`${colorCodePrefix.error}Error in: ${event.id} ${colorCodePrefix.dark_purple}[${system.scriptVersion}]`);
-			world.sendMessage(`${colorCodePrefix.error}${e}`);
+			debugPrint(`${colorCodePrefix.error}Error in: ${event.id} ${colorCodePrefix.dark_purple}[${system.scriptVersion}]`);
+			debugPrint(`${colorCodePrefix.error}${e}`);
 			console.error(e);
 		}
-		world.sendMessage(`${colorCodePrefix.info}spawned job: ${colorCodePrefix.blue}${event.id}`)
+		debugPrint(`${colorCodePrefix.info}spawned job: ${colorCodePrefix.blue}${event.id}`)
 	}
 	
 }
