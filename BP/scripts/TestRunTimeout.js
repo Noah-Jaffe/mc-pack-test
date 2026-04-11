@@ -7,7 +7,7 @@ import { ScriptState } from "./ScriptState.js";
 import { RepeatableEvent } from "./RepeatableEvent.js";
 import { ChunkLoaderEvent } from "./ChunkLoaderEvent.ja";
 
-const scriptPrefix = `sample`;
+const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:debug`;
