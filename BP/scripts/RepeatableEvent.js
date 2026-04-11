@@ -1,7 +1,7 @@
 "use strict";
 import { world } from "@minecraft/server";
 
-export /*abstract*/ class RepeatableEven {
+export /*abstract*/ class RepeatableEvent {
   /**
    * Called when the event starts.
    * Default: does nothing.
