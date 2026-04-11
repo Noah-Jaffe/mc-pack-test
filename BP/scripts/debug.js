@@ -5,7 +5,7 @@ import { ColorCodes } from "./ColorCodes.js";
 * @param {any} node a value to be stringified and then formatted with colors.
 * @retueh {string}
 */
-function debugStringify(node) {
+export function debugStringify(node) {
 	let root = true;
 	try {
 	return JSON.stringify(node, (key, value) => {
@@ -35,7 +35,7 @@ function debugStringify(node) {
 }
 
 /** @returns printable string with some useful information for debugging */
-function debugPrefix() {
+export function debugPrefix() {
 	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
 }
 
