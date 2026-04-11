@@ -29,10 +29,9 @@ export class ChunkLoaderEvent extends RepeatableEvent {
 
   /**
    * Called when stopping the event
-   * @param {Event} event - source event that Called the /scriptEvent command
    * @param {ScriptState} scriptState - the ScriptState of the active event
    */
-  static onStop(event/*:Event*/, scriptState/*: ScriptState*/): void {
+  static onStop(scriptState/*: ScriptState*/): void {
     world.sendMessage(`${debugPrefix()}${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.lastTick}`);
 		scriptState.cancelRequested = null;
 		scriptState.id = null;
