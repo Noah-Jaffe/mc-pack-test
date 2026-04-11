@@ -1,9 +1,11 @@
 "use strict";
 import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
-import { debugPrefix } from "./debug.js";
+import { debugPrefix, debugStringify, } from "./debug.js";
 
-const scriptPrefix = `chunkGen`;
+import { ScriptState } from "./ScriptState.js";
+
+const scriptPrefix = `sample`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:debug`;
@@ -31,37 +33,7 @@ function debugPrint() {
 		console.log(...arguments);
 	}
 }
-/**
- * @param {any} node a value to be stringified and then formatted with colors.
- * @retueh {string}
- */
-function debugStringify(node) {
-	let root = true;
-	return JSON.stringify(node, (key, value) => {
-		if (root && typeof(value) == "object") {
-			root = false;
-			var replacement = {};
-			for (var k in value) {
-				if (Object.hasOwnProperty.call(value, k)) {
-					replacement[`${ColorCodes.yellow}${k}${ColorCodes.reset}`] = value[k];
-				}
-			}
-			return replacement;
-		}
-		root = false;
-		switch (typeof (value)) {
-			case "number":
-				return parseFloat(value.toFixed(2));
-				case "function":
-					return value.toString();
-		}
-		return value;
-	}, 0.1)
-}
-/** @returns printable string with some useful information for debugging */
-function debugPrefix() {
-	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
-}
+
 /** 
  * /scriptEvent {@link debugJobId}
  * Debug command, toggles the debug mode
