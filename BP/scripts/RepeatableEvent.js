@@ -1,5 +1,6 @@
 "use strict";
 import { world } from "@minecraft/server";
+import { debugPrefix } from "./debug.js";
 
 export /*abstract*/ class RepeatableEvent {
   /**
