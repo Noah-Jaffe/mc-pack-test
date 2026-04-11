@@ -23,7 +23,7 @@ export class ChunkLoaderEvent extends RepeatableEvent {
    * @param {ScriptState} scriptState - the ScriptState of the active event
    */
   static conditionCheck(event/*:Event*/, scriptState/*: ScriptState*/): boolean {
-  	world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+  	world.sendMessage(`${debugPrefix()}Called conditionCheck`);
     return true;
   }
 
