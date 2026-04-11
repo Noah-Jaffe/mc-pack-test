@@ -10,17 +10,16 @@ const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:debug`;
 
-// Store current job + cancel state
-const SCRIPT_STATE = {
-	id: null,
+const chunkSize = 16;
+
+const SCRIPT_STATE = new ScriptState({
 	step: null,
 	tickInterval: 20,
 	root: null,
 	lastCoords: null,
 	lastTick: null,
 	debug: true,
-}
-const chunkSize = 16;
+});
 
 /**
  * print to console or world.sendMessage depending on the global SCRIPT_STATE.debug
