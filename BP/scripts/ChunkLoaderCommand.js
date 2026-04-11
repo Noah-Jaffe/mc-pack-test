@@ -11,7 +11,10 @@ export class ChunkLoaderEvent extends RepeatableEvent {
    * @param {ScriptState} scriptState - the ScriptState of the active event
    */
   static onStart(event/*:Event*/, scriptState/*: ScriptState*/): void {
-    
+    scriptState.step = 0;
+		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
+		scriptState.root = {x:startingLoc.x, z: startingLoc.z};
+		scriptState.cancelRequested = null;
   }
 
   /**
