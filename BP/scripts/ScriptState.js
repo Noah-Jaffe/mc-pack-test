@@ -6,4 +6,14 @@ export /*interface*/ class ScriptState {
 	debug;//?: boolean;
   // custom fields as needed
   // [key: string]: unknown;
+  
+  constructor(kwArgs) {
+  	if (typeof kwArgs === "object") {
+  		for (const [k, v] of kwArgs) {
+  			this[k] = v;
+  		}
+  	} else {
+  		this["_args"] = kwArgs;
+  	}
+  }
 }
