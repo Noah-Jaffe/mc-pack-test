@@ -12,7 +12,7 @@ export /*abstract*/ class RepeatableEvent {
    */
   static onStart(event/*:Event*/, scriptState/*: ScriptState*/): void {
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+    world.sendMessage(`${debugPrefix()}Called onStart`);
   }
 
   /**
@@ -22,7 +22,7 @@ export /*abstract*/ class RepeatableEvent {
    * @param {ScriptState} scriptState - the ScriptState of the active event
    */
   static conditionCheck(event/*:Event*/, scriptState/*: ScriptState*/): boolean {
-  	world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+  	world.sendMessage(`${debugPrefix()}Called conditionCheck`);
     return true;
   }
 
@@ -35,7 +35,7 @@ export /*abstract*/ class RepeatableEvent {
    */
   static onStop(event/*:Event*/, scriptState/*: ScriptState*/): void {
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+    world.sendMessage(`${debugPrefix()}Called onStop`);
   }
   
   /**
@@ -45,6 +45,6 @@ export /*abstract*/ class RepeatableEvent {
    */
   static doTick(scriptState/*: ScriptState*/): void {
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+    world.sendMessage(`${debugPrefix()}Called doTick`);
   }
 }
