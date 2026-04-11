@@ -3,6 +3,7 @@ import { world } from "@minecraft/server";
 import { debugPrefix } from "./debug.js";
 
 export /*abstract*/ class RepeatableEvent {
+	
   /**
    * Called when the event starts.
    * Default: does nothing.
@@ -33,6 +34,16 @@ export /*abstract*/ class RepeatableEvent {
    * @param {ScriptState} scriptState - the ScriptState of the active event
    */
   static onStop(event/*:Event*/, scriptState/*: ScriptState*/): void {
+    // default no-op
+    world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
+  }
+  
+  /**
+   * Called each time the script is activated (after onStart (once) and conditionCheck returned true)
+   * Default: does nothing.
+   * @param {ScriptState} scriptState - the ScriptState of the active event
+   */
+  static doTick(scriptState/*: ScriptState*/): void {
     // default no-op
     world.sendMessage(`${debugPrefix()}Called ${arguments.callee.toString().replaceAll(/(?:[\s\S\r\n]*?function[\W\s]*)(.*?)(?:[\s\W][\s\S\r\n]*)/gmi, "$1")}`);
   }
