@@ -5,9 +5,9 @@ export /*interface*/ class ScriptState {
 	/** @propety {boolean} [debug] - optional debug flag */
 	debug;//?: boolean;
 	/** @property {boolean} cancelRequested - if the state has raised a cancel flag */
-	cancelRequested;//: boolean;
+	cancelRequested = false;//: boolean = false;
 	/** @propety {number} step - the current step (increments even if conditionCheck returns false) */
-	step;//: number;
+	step = 0;//: number = 0;
  	
   // custom fields as needed
   // [key: string]: unknown;
