@@ -1,55 +1,18 @@
 "use strict";
-import { system, world, Vector3 } from "@minecraft/server";
-
+import { system, world } from "@minecraft/server";
+import { ColorCodes } from "./ColorCodes.js";
+import { debugPrefix } from "./debug.js";
 
 const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:debug`;
-const INTERVAL_BETWEEN_ACTIONS = 20;
-const colorCodePrefix = {
-	"black": "§0",
-	"dark_blue": "§1",
-	"dark_green": "§2",
-	"dark_aqua": "§3",
-	"dark_red": "§4",
-	"dark_purple": "§5",
-	"gold": "§6",
-	"debug": "§6",
-	"gray": "§7",
-	"dark_gray": "§8",
-	"blue": "§9",
-	"green": "§a",
-	"aqua": "§b",
-	"red": "§c",
-	"error": "§c",
-	"light_purple": "§d",
-	"yellow": "§e",
-	"warning": "§e",
-	"white": "§f",
-	"info": "§f",
-	"minecoin_gold": "§g",
-	"material_quartz": "§h",
-	"material_iron": "§i",
-	"material_netherite": "§j",
-	"material_redstone": "§m",
-	"material_copper": "§n",
-	"material_gold": "§p",
-	"material_emerald": "§q",
-	"material_diamond": "§s",
-	"material_lapis": "§t",
-	"material_amethyst": "§u",
-	"material_resin": "§v",
-	"reset": "§r",
-	"obfuscate": "§k",
-	"bold": "§l",
-	"italic": "§o",
-	
-}
+
 // Store current job + cancel state
 const SCRIPT_STATE = {
 	id: null,
 	step: null,
+	tickInterval: 20,
 	root: null,
 	lastCoords: null,
 	lastTick: null,
@@ -80,7 +43,7 @@ function debugStringify(node) {
 			var replacement = {};
 			for (var k in value) {
 				if (Object.hasOwnProperty.call(value, k)) {
-					replacement[`${colorCodePrefix.yellow}${k}${colorCodePrefix.reset}`] = value[k];
+					replacement[`${ColorCodes.yellow}${k}${ColorCodes.reset}`] = value[k];
 				}
 			}
 			return replacement;
@@ -97,7 +60,7 @@ function debugStringify(node) {
 }
 /** @returns printable string with some useful information for debugging */
 function debugPrefix() {
-	return `${colorCodePrefix.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${colorCodePrefix.blue}(${colorCodePrefix.yellow}${system.currentTick}${colorCodePrefix.blue})${colorCodePrefix.reset}:`;
+	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
 }
 /** 
  * /scriptEvent {@link debugJobId}
@@ -107,7 +70,7 @@ function debugPrefix() {
  */
 function debugCommand(event, scriptState){
 	scriptState.debug = !scriptState.debug;
-	world.sendMessage(`${colorCodePrefix.info}Set debug mode to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`);
+	world.sendMessage(`${ColorCodes.info}Set debug mode to: ${scriptState.debug ? ColorCodes.green : ColorCodes.red}${scriptState.debug}`);
 }
 
 /** 
@@ -120,11 +83,11 @@ function debugCommand(event, scriptState){
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.id != null) {
-		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) is in the process of aborting, please wait and try again!!`);
+		world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Active ${scriptPrefix} (${scriptState.id}) is in the process of aborting, please wait and try again!!`);
 		return null;
 	}
 	if (scriptState.root != null && scriptState.step> 10) {
-		world.sendMessage(`${debugPrefix()}${colorCodePrefix.green}RESUMING FROM PREVIOUS STATE ${colorCodePrefix.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
+		world.sendMessage(`${debugPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
 	} else {
 		scriptState.step = 0;
 		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
@@ -146,11 +109,11 @@ function startLoop(event, scriptState) {
  */
 function stopLoop(event, scriptState) {
 	if (scriptState.id == null){
-		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}No active ${scriptPrefix} running!\nTo start one, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}`)
+		world.sendMessage(`${debugPrefix()}${ColorCodes.warning}No active ${scriptPrefix} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`)
 		return;
 	}
 	scriptState.cancelRequested = true;
-	world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Raised the ${scriptPrefix} stop flag!`)
+	world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Raised the ${scriptPrefix} stop flag!`)
 }
 
 function repeatableLoop(scriptState){
@@ -158,7 +121,7 @@ function repeatableLoop(scriptState){
 	debugPrint(`${debugPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
-		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.lastCoords)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
+		world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}\n\n${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.lastTick}`);
 		scriptState.cancelRequested = null;
 		scriptState.id = null;
 		return;
@@ -171,7 +134,7 @@ function repeatableLoop(scriptState){
 	scriptState.id=system.runTimeout(()=>{
 		debugPrint(`${debugPrefix()}repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
-	}, INTERVAL_BETWEEN_ACTIONS);
+	}, scriptState.tickInterval);
 	scriptState.step++;
 	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
 }
@@ -257,15 +220,15 @@ const jobHandler = {
 function recognizeMyEvents(event) {
 	
 	if (event.id in jobHandler) {
-		debugPrint(`${colorCodePrefix.info}Attempting to start: ${colorCodePrefix.green}${event.id}`)
+		debugPrint(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`)
 		try {
 			jobHandler[event.id](event, SCRIPT_STATE);
 		} catch (e) {
-			debugPrint(`${colorCodePrefix.error}Error in: ${event.id} ${colorCodePrefix.dark_purple}[${system.scriptVersion}]`);
-			debugPrint(`${colorCodePrefix.error}${e}`);
+			debugPrint(`${ColorCodes.error}Error in: ${event.id} ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
+			debugPrint(`${ColorCodes.error}${e}`);
 			console.error(e);
 		}
-		debugPrint(`${colorCodePrefix.info}spawned job: ${colorCodePrefix.blue}${event.id}`)
+		debugPrint(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.id}`)
 	}
 	
 }
@@ -314,7 +277,7 @@ function createMockMinecraft() {
 	const world = {
 		sendMessage(msg) {
 			const stack = new Error("just for stack trace");
-			msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+			msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
 			console.trace(`[MSG @${currentTick}]`, msg, stack);
 		}
 	};
@@ -366,7 +329,7 @@ function createMockMinecraft() {
 					onScreenDisplay: {
 						setActionBar: (msg) => {
 							const stack = new Error("just for stack trace");
-							msg = msg.replaceAll(new RegExp(Object.values(colorCodePrefix).join("|"), "gmi"), "")
+							msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
 							console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
 						}
 					}
