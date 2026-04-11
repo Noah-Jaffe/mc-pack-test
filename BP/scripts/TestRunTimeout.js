@@ -5,7 +5,7 @@ import { system, world, Vector3 } from "@minecraft/server";
 const scriptPrefix = `chunkGen`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
-const debugJobId = `${scriptPrefix}:dbg`;
+const debugJobId = `${scriptPrefix}:debug`;
 const INTERVAL_BETWEEN_ACTIONS = 20;
 const colorCodePrefix = {
 	"black": "§0",
@@ -57,6 +57,10 @@ const SCRIPT_STATE = {
 }
 const chunkSize = 16;
 
+/**
+ * print to console or world.sendMessage depending on the global SCRIPT_STATE.debug
+ * @params arguments passed directly to the debug print function
+ */
 function debugPrint() {
 	if (SCRIPT_STATE.debug) {
 		world.sendMessage(...arguments);
@@ -64,6 +68,114 @@ function debugPrint() {
 		console.log(...arguments);
 	}
 }
+/**
+ * @param {any} node a value to be stringified and then formatted with colors.
+ * @retueh {string}
+ */
+function debugStringify(node) {
+	let root = true;
+	return JSON.stringify(node, (key, value) => {
+		if (root && typeof(value) == "object") {
+			root = false;
+			var replacement = {};
+			for (var k in value) {
+				if (Object.hasOwnProperty.call(value, k)) {
+					replacement[`${colorCodePrefix.yellow}${k}${colorCodePrefix.reset}`] = value[k];
+				}
+			}
+			return replacement;
+		}
+		root = false;
+		switch (typeof (value)) {
+			case "number":
+				return parseFloat(value.toFixed(2));
+				case "function":
+					return value.toString();
+		}
+		return value;
+	}, 0.1)
+}
+/** @returns printable string with some useful information for debugging */
+function debugPrefix() {
+	return `${colorCodePrefix.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${colorCodePrefix.blue}(${colorCodePrefix.yellow}${system.currentTick}${colorCodePrefix.blue})${colorCodePrefix.reset}:`;
+}
+/** 
+ * /scriptEvent {@link debugJobId}
+ * Debug command, toggles the debug mode
+ * @param {Event} event the source event
+ * @param {SCRIPT_STATE} scriptState reference by address to the script state
+ */
+function debugCommand(event, scriptState){
+	scriptState.debug = !scriptState.debug;
+	world.sendMessage(`${colorCodePrefix.info}Set debug mode to: ${scriptState.debug ? colorCodePrefix.green : colorCodePrefix.red}${scriptState.debug}`);
+}
+
+/** 
+ * /scriptEvent {@link startJobId}
+ * Start the repeatable event command (if one is not yet running)
+ * @note Stop the repeatable event with a /scriptEvent {@link stopJobId}
+ * @param {Event} event the source event
+ * @param {SCRIPT_STATE} scriptState reference by address to the script state. The {@link SCRIPT_STATE.id} determines if a new one can be started or it is already running.
+ */
+function startLoop(event, scriptState) {
+	// @todo read event.message for the custom args
+	if (scriptState.cancelRequested && scriptState.id != null) {
+		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) is in the process of aborting, please wait and try again!!`);
+		return null;
+	}
+	if (scriptState.root != null && scriptState.step> 10) {
+		world.sendMessage(`${debugPrefix()}${colorCodePrefix.green}RESUMING FROM PREVIOUS STATE ${colorCodePrefix.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
+	} else {
+		scriptState.step = 0;
+		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
+		scriptState.root = {x:startingLoc.x, z: startingLoc.z};
+		scriptState.cancelRequested = null;
+	}
+	debugPrint(`${debugPrefix()}Queued start of loop`);
+	scriptState.id=system.runTimeout(()=>{
+		debugPrint(`${debugPrefix()}starting loop inner timeout running`);
+		repeatableLoop(scriptState)
+	}, 1);
+}
+
+/** 
+ * /scriptEvent {@link stopJobId}
+ * Stop the repeatable event command
+ * @param {Event} event the source event
+ * @param {SCRIPT_STATE} scriptState reference by address to the script state. The {@link SCRIPT_STATE.id} determines which job is to be stopped.
+ */
+function stopLoop(event, scriptState) {
+	if (scriptState.id == null){
+		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}No active ${scriptPrefix} running!\nTo start one, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}`)
+		return;
+	}
+	scriptState.cancelRequested = true;
+	world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Raised the ${scriptPrefix} stop flag!`)
+}
+
+function repeatableLoop(scriptState){
+	//debugPrint(`${debugPrefix()}repeatable`);
+	debugPrint(`${debugPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
+	if (scriptState.cancelRequested) {
+		// abort loop enacted
+		world.sendMessage(`${debugPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.lastCoords)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
+		scriptState.cancelRequested = null;
+		scriptState.id = null;
+		return;
+	}
+	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
+	debugPrint(`${debugPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	// save persistent successful state
+	scriptState.lastTick = system.currentTick;
+	scriptState.lastCoords = myActivity;
+	scriptState.id=system.runTimeout(()=>{
+		debugPrint(`${debugPrefix()}repeatable loop inner timeout running`);
+		repeatableLoop(scriptState)
+	}, INTERVAL_BETWEEN_ACTIONS);
+	scriptState.step++;
+	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
+}
+
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
@@ -131,92 +243,12 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
-function repeatableLoop(scriptState){
-	//debugPrint(`${dbgPrefix()}repeatable`);
-	debugPrint(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
-	if (scriptState.cancelRequested) {
-		// abort loop enacted
-		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${colorCodePrefix.warning}To start again, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}\n\n${colorCodePrefix.info}Last step:${colorCodePrefix.green}${scriptState.step}\n${colorCodePrefix.info}Last coords:${colorCodePrefix.green}${JSON.stringify(scriptState.lastCoords)}\n${colorCodePrefix.info}Last exe tick:${colorCodePrefix.green}${scriptState.lastTick}`);
-		scriptState.cancelRequested = null;
-		scriptState.id = null;
-		return;
-	}
-	const myActivity = getChunkAtStep(scriptState?.root?.x ?? 0, scriptState?.root?.z ?? 0, scriptState.step);
-	debugPrint(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
-	// save persistent successful state
-	scriptState.lastTick = system.currentTick;
-	scriptState.lastCoords = myActivity;
-	scriptState.id=system.runTimeout(()=>{
-		debugPrint(`${dbgPrefix()}repeatable loop inner timeout running`);
-		repeatableLoop(scriptState)
-	}, INTERVAL_BETWEEN_ACTIONS);
-	scriptState.step++;
-	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
-}
-function dbgPrefix() {
-	return `${colorCodePrefix.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${colorCodePrefix.blue}(${colorCodePrefix.yellow}${system.currentTick}${colorCodePrefix.blue})${colorCodePrefix.reset}:`;
-}
-function startLoop(event, scriptState) {
-	// @todo read event.message for the custom args
-	if (scriptState.cancelRequested && scriptState.id != null) {
-		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Active ${scriptPrefix} (${scriptState.id}) is in the process of aborting, please wait and try again!!`);
-		return null;
-	}
-	if (scriptState.root != null && scriptState.step> 10) {
-		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.green}RESUMING FROM PREVIOUS STATE ${colorCodePrefix.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
-	} else {
-		scriptState.step = 0;
-		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
-		scriptState.root = {x:startingLoc.x, z: startingLoc.z};
-		scriptState.cancelRequested = null;
-	}
-	debugPrint(`${dbgPrefix()}Queued start of loop`);
-	scriptState.id=system.runTimeout(()=>{
-		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
-		repeatableLoop(scriptState)
-	}, 1);
-}
-function stopLoop(event, scriptState) {
-	if (scriptState.id == null){
-		world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}No active ${scriptPrefix} running!\nTo start one, run:\n${colorCodePrefix.light_purple}/scriptEvent ${startJobId}`)
-		return;
-	}
-	scriptState.cancelRequested = true;
-	world.sendMessage(`${dbgPrefix()}${colorCodePrefix.warning}Raised the ${scriptPrefix} stop flag!`)
-}
-
-function dbgCmd(event, scriptState){
-	debugPrint({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
-}
 
 const jobHandler = {
 	[startJobId]: startLoop,
 	[stopJobId]: stopLoop,
-	[debugJobId]: dbgCmd,
+	[debugJobId]: debugCommand,
 	
-}
-JSON.debugStringify = (node) => {
-	let root = true;
-	return JSON.stringify(node, (key, value) => {
-		if (root && typeof(value) == "object") {
-			root = false;
-			var replacement = {};
-			for (var k in value) {
-				if (Object.hasOwnProperty.call(value, k)) {
-					replacement[`${colorCodePrefix.yellow}${k}${colorCodePrefix.reset}`] = value[k];
-				}
-			}
-			return replacement;
-		}
-		root = false;
-		switch (typeof (value)) {
-			case "number":
-				return parseFloat(value.toFixed(2));
-				case "function":
-					return value.toString();
-		}
-		return value;
-	}, 0.1)
 }
 
 /**
