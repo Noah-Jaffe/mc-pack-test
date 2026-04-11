@@ -1,46 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 
-// Helper to stringify safely
-function formatMessage(args) {
-	return args.map(a => {
-		try {
-			if (typeof a === "object") return JSON.stringify(a);
-			return String(a);
-		} catch {
-			return "[Unserializable Object]";
-		}
-	}).join(" ");
-}
-export class DebugConsole {
-	debug (...args) {
-		const msg = formatMessage(args);
-		world.sendMessage(`§7[DEBUG] §r${msg}`);
-		console.debug(...args);
-	}
-	
-	log (...args) {
-		const msg = formatMessage(args);
-		world.sendMessage(`§7[LOG] §r${msg}`);
-		console.log(...args); // optional (keeps original behavior)
-	}
-	
-	warn (...args) {
-		const msg = formatMessage(args);
-		world.sendMessage(`§e[WARN] §r${msg}`);
-		console.warn(...args);
-	}
-	
-	error (...args) {
-		const msg = formatMessage(args);
-		world.sendMessage(`§c[ERROR] ${msg}`);
-		if (args[0] instanceof Error) {
-			world.sendMessage(`§8${args[0].stack}`);
-		}
-		console.error(...args);
-	}
-}
-
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
 * @retueh {string}
@@ -77,4 +37,33 @@ function debugStringify(node) {
 /** @returns printable string with some useful information for debugging */
 function debugPrefix() {
 	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
+}
+
+export class DebugConsole {
+	debug (...args) {
+		const msg = debugStringify(args);
+		world.sendMessage(`§7[DEBUG] §r${msg}`);
+		console.debug(...args);
+	}
+	
+	log (...args) {
+		const msg = debugStringify(args);
+		world.sendMessage(`§7[LOG] §r${msg}`);
+		console.log(...args); // optional (keeps original behavior)
+	}
+	
+	warn (...args) {
+		const msg = debugStringify(args);
+		world.sendMessage(`§e[WARN] §r${msg}`);
+		console.warn(...args);
+	}
+	
+	error (...args) {
+		const msg = debugStringify(args);
+		world.sendMessage(`§c[ERROR] ${msg}`);
+		if (args[0] instanceof Error) {
+			world.sendMessage(`§8${args[0].stack}`);
+		}
+		console.error(...args);
+	}
 }
