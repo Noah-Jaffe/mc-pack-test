@@ -5,12 +5,13 @@ import { debugPrefix, debugStringify, } from "./debug.js";
 
 import { ScriptState } from "./ScriptState.js";
 import { RepeatableEvent } from "./RepeatableEvent.js";
+import { ChunkLoaderEvent } from "./ChunkLoaderEvent.ja";
 
 const scriptPrefix = `sample`;
 const startJobId = `${scriptPrefix}:start`;
 const stopJobId = `${scriptPrefix}:stop`;
 const debugJobId = `${scriptPrefix}:debug`;
-
+let command = ChunkLoaderEvent;
 const chunkSize = 16;
 
 const SCRIPT_STATE = new ScriptState({
@@ -62,10 +63,7 @@ function startLoop(event, scriptState) {
 	if (scriptState.root != null && scriptState.step> 10) {
 		world.sendMessage(`${debugPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(scriptState.root)} #${scriptState.step}`)
 	} else {
-		scriptState.step = 0;
-		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
-		scriptState.root = {x:startingLoc.x, z: startingLoc.z};
-		scriptState.cancelRequested = null;
+		command.onStart(event, scriptState);
 	}
 	debugPrint(`${debugPrefix()}Queued start of loop`);
 	scriptState.id=system.runTimeout(()=>{
@@ -89,7 +87,7 @@ function stopLoop(event, scriptState) {
 	world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Raised the ${scriptPrefix} stop flag!`)
 }
 
-function repeatableLoop(scriptState){
+/*function repeatableLoop(scriptState){
 	//debugPrint(`${debugPrefix()}repeatable`);
 	debugPrint(`${debugPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	if (scriptState.cancelRequested) {
@@ -110,14 +108,14 @@ function repeatableLoop(scriptState){
 	}, scriptState.tickInterval);
 	scriptState.step++;
 	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
-}
+}*/
 function repeatableLoop(scriptState){
 	//debugPrint(`${debugPrefix()}repeatable`);
 	debugPrint(`${debugPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
 		world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
-		command.onStop():
+		command.onStop(scriptState):
 		return;
 	}
 	if (command.conditionalCheck(scriptState)) {
@@ -129,73 +127,6 @@ function repeatableLoop(scriptState){
 		repeatableLoop(scriptState)
 	}, scriptState.tickInterval);
 	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
-}
-function roundForChunkEdge(value) {
-	if (value >= 0) {
-		return value - (value % chunkSize);
-	}
-	else {
-		return value - (((value % chunkSize) + chunkSize) % chunkSize);
-	}
-}
-function getChunkAtStep(raw_x, raw_z, stepIndex) {
-	const baseX = roundForChunkEdge(raw_x);
-	const baseZ = roundForChunkEdge(raw_z);
-	
-	// Step 0 = center
-	if (stepIndex === 0) {
-		let ret = { x: baseX, z: baseZ };
-		debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
-		return ret;
-	}
-	
-	// ---- Find ring r ----
-	// Total points up to ring r: 1 + 2r(r+1)
-	let r = Math.floor((Math.sqrt(2 * stepIndex + 1) - 1) / 2);
-	
-	// Ensure r is correct (fix boundary cases)
-	while (1 + 2 * r * (r + 1) <= stepIndex) r++;
-	while (1 + 2 * (r - 1) * r > stepIndex) r--;
-	
-	// First index in this ring
-	const ringStart = 1 + 2 * (r - 1) * r;
-	
-	const offset = stepIndex - ringStart; // 0 → 4r-1
-	
-	const sideLen = r;
-	
-	let x, z;
-	
-	if (offset < sideLen) {
-		// Top-right edge
-		x = offset;
-		z = -r + offset;
-	} 
-	else if (offset < 2 * sideLen) {
-		// Bottom-right edge
-		const o = offset - sideLen;
-		x = r - o;
-		z = o;
-	} 
-	else if (offset < 3 * sideLen) {
-		// Bottom-left edge
-		const o = offset - 2 * sideLen;
-		x = -o;
-		z = r - o;
-	} 
-	else {
-		// Top-left edge
-		const o = offset - 3 * sideLen;
-		x = -r + o;
-		z = -o;
-	}
-	
-	let ret = {
-		x: baseX + x * chunkSize,
-		z: baseZ + z * chunkSize,
-	};
-	debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
-	return ret;
 }
 
 const jobHandler = {
