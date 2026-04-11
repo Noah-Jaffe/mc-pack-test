@@ -4,6 +4,7 @@ import { ColorCodes } from "./ColorCodes.js";
 import { debugPrefix, debugStringify, } from "./debug.js";
 
 import { ScriptState } from "./ScriptState.js";
+import { RepeatableEvent } from "./RepeatableEvent.js";
 
 const scriptPrefix = `sample`;
 const startJobId = `${scriptPrefix}:start`;
@@ -19,6 +20,7 @@ const SCRIPT_STATE = new ScriptState({
 	lastCoords: null,
 	lastTick: null,
 	debug: true,
+	cancelRequested: null
 });
 
 /**
@@ -109,7 +111,25 @@ function repeatableLoop(scriptState){
 	scriptState.step++;
 	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
 }
-
+function repeatableLoop(scriptState){
+	//debugPrint(`${debugPrefix()}repeatable`);
+	debugPrint(`${debugPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.id}'`);
+	if (scriptState.cancelRequested) {
+		// abort loop enacted
+		world.sendMessage(`${debugPrefix()}${ColorCodes.warning}Active ${scriptPrefix} (${scriptState.id}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+		command.onStop():
+		return;
+	}
+	if (command.conditionalCheck(scriptState)) {
+		const myActivity = command.doTick(scriptState);
+		debugPrint(`${debugPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	}
+	scriptState.id=system.runTimeout(()=>{
+		debugPrint(`${debugPrefix()}repeatable loop inner timeout running`);
+		repeatableLoop(scriptState)
+	}, scriptState.tickInterval);
+	debugPrint(`${debugPrefix()}Queued for step ${scriptState.step}`);
+}
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
