@@ -73,7 +73,6 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 
 // Store current job + cancel state
 const SCRIPT_STATE = {
-	// @todo constructor registers?
 	// script instance generic
 	namespace: `chunkGen`,
 	interval: 20,
@@ -81,12 +80,35 @@ const SCRIPT_STATE = {
 	id: null,
 	step: null,
 	debug: true,
-	/* //@todo do i want these? does it simplify things?
-	onStart: ()=>{}, //? : null,
-	onStop: ()=>{}, //? : null,
-	onTick: ()=>{}, //? : null,
-	unregister: ()=>{}, //?: null,
-	*/
+	/** run once, before the first onTick */
+	onStart: (event)=>{
+		// @todo refactor to onStart
+		if (this.state.root != null && this.step> 10) {
+			world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
+		} else {
+			this.step = 0;
+			const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
+			this.state.root = {x:startingLoc.x, z: startingLoc.z};
+			this.cancelRequested = null;
+		}
+	}, //? : null,
+	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
+	onStop: ()=>{
+		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
+		this.cancelRequested = null;
+		this.jobId = null;
+	}, //? : null,
+	/** run at each tick interval */
+	onTick: ()=>{
+		const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
+		this.state.lastTick = system.currentTick;
+		this.state.lastCoords = myActivity;
+	}, //? : null,
+	/** run once, before onStart */
+	onRegister: ()=>{
+		
+	}, //?: null,
+	
 	state: {
 		// script instance specific
 		root: null,
@@ -115,9 +137,12 @@ function repeatableLoop(scriptState){
 		// abort loop enacted
 		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 		// @todo refactor to onStop
+		/*
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.state.lastTick}`);
 		scriptState.cancelRequested = null;
 		scriptState.jobId = null;
+		*/ 
+		scriptState.onStop();
 		return;
 	}
 	// const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
@@ -136,6 +161,7 @@ function repeatableLoop(scriptState){
 	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
 }
 
+/*
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.jobId != null) {
@@ -155,6 +181,20 @@ function startLoop(event, scriptState) {
 	scriptState.jobId=system.runTimeout(()=>{
 		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
 		repeatableLoop(scriptState)
+	}, 1);
+}
+*/
+function startLoop(event, scriptState) {
+	// @todo read event.message for the custom args
+	if (scriptState.cancelRequested && scriptState.jobId != null) {
+		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
+		return null;
+	}
+	scriptState.onStart(event);
+	debugPrint(`${dbgPrefix()}Queued start of loop`);
+	scriptState.jobId=system.runTimeout(()=>{
+		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
+		repeatableLoop(scriptState);
 	}, 1);
 }
 function stopLoop(event, scriptState) {
@@ -221,110 +261,110 @@ function recognizeMyEvents(event) {
 
 /*
 function createMockMinecraft() {
-	let currentTick = 0;
-	let nextJobId = 1;
-	const jobs = new Map();
-	const timeouts = [];
-	
-	const system = {
-		get currentTick() {
-			return currentTick;
-		},
-		
-		runJob(gen) {
-			const id = nextJobId++;
-			jobs.set(id, gen);
-			return id;
-		},
-		runTimeout(callback, delayTicks = 0) {
-			const id = nextJobId++;
-			const runAt = currentTick + Math.max(0, delayTicks);
-			
-			timeouts.push({
-				runAt,
-				callback
-			});
-			return id;
-		},
-		clearJob(id) {
-			jobs.delete(id);
-		},
-		
-		afterEvents: {
-			scriptEventReceive: {
-				subscribed: [], 
-				subscribe: (cb)=>{
-					system.afterEvents.scriptEventReceive.subscribed.push(cb);
-				}
-			}
-		}
-	};
-	
-	const world = {
-		sendMessage(msg) {
-			const stack = new Error("just for stack trace");
-			msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
-			console.trace(`[MSG @${currentTick}]`, msg, stack);
-		}
-	};
-	
-	function tick(n = 1) {
-		for (let i = 0; i < n; i++) {
-			currentTick++;
-			console.log(`CURRENT TICK ${currentTick}`)
-			
-			// ---- RUN TIMEOUTS ----
-			
-			for (let j = timeouts.length - 1; j >= 0; j--) {
-				if (timeouts[j].runAt <= currentTick) {
-					try {
-						timeouts[j].callback();
-					} catch (e) {
-						console.error("Timeout error:", e);
-					}
-					
-					timeouts.splice(j, 1);
-				}
-			}
-			
-			// ---- RUN JOBS ----
-			
-			for (const [id, job] of [...jobs]) {
-				try {
-					const res = job.next();
-					
-					if (res.done) {
-						jobs.delete(id);
-					}
-					
-				} catch (e) {
-					console.error("Job error:", e);
-					jobs.delete(id);
-				}
-			}
-		}
-	}
-	
-	function fireScriptEvent(id, sourceEntity = null) {
-		for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
-			
-			scriptEventCallback({
-				id,
-				sourceEntity: sourceEntity ?? {
-					location: { x: 0, y: 0, z: 0 },
-					onScreenDisplay: {
-						setActionBar: (msg) => {
-							const stack = new Error("just for stack trace");
-							msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
-							console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
-						}
-					}
-				}
-			});
-		}
-	}
-	
-	return { system, world, tick, fireScriptEvent };
+let currentTick = 0;
+let nextJobId = 1;
+const jobs = new Map();
+const timeouts = [];
+
+const system = {
+get currentTick() {
+return currentTick;
+},
+
+runJob(gen) {
+const id = nextJobId++;
+jobs.set(id, gen);
+return id;
+},
+runTimeout(callback, delayTicks = 0) {
+const id = nextJobId++;
+const runAt = currentTick + Math.max(0, delayTicks);
+
+timeouts.push({
+runAt,
+callback
+});
+return id;
+},
+clearJob(id) {
+jobs.delete(id);
+},
+
+afterEvents: {
+scriptEventReceive: {
+subscribed: [], 
+subscribe: (cb)=>{
+system.afterEvents.scriptEventReceive.subscribed.push(cb);
+}
+}
+}
+};
+
+const world = {
+sendMessage(msg) {
+const stack = new Error("just for stack trace");
+msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
+console.trace(`[MSG @${currentTick}]`, msg, stack);
+}
+};
+
+function tick(n = 1) {
+for (let i = 0; i < n; i++) {
+currentTick++;
+console.log(`CURRENT TICK ${currentTick}`)
+
+// ---- RUN TIMEOUTS ----
+
+for (let j = timeouts.length - 1; j >= 0; j--) {
+if (timeouts[j].runAt <= currentTick) {
+try {
+timeouts[j].callback();
+} catch (e) {
+console.error("Timeout error:", e);
+}
+
+timeouts.splice(j, 1);
+}
+}
+
+// ---- RUN JOBS ----
+
+for (const [id, job] of [...jobs]) {
+try {
+const res = job.next();
+
+if (res.done) {
+jobs.delete(id);
+}
+
+} catch (e) {
+console.error("Job error:", e);
+jobs.delete(id);
+}
+}
+}
+}
+
+function fireScriptEvent(id, sourceEntity = null) {
+for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
+
+scriptEventCallback({
+id,
+sourceEntity: sourceEntity ?? {
+location: { x: 0, y: 0, z: 0 },
+onScreenDisplay: {
+setActionBar: (msg) => {
+const stack = new Error("just for stack trace");
+msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
+console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
+}
+}
+}
+});
+}
+}
+
+return { system, world, tick, fireScriptEvent };
 }
 
 
