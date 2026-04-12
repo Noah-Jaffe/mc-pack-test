@@ -386,3 +386,6 @@ sim.tick(25); // simulate ticks
 */
 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
+system.runTimeout(()=>{
+		world.sendMessage(`start with\n/scriptEvent ${startJobId}`);
+	}, 20*5);
