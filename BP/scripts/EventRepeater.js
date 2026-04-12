@@ -1,6 +1,7 @@
 "use strict";
 import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
+import { ChunkLoader } from "./ChunkLoader.js";
 
 // @todo refactor script state layout
 function roundForChunkEdge(value) {
@@ -95,7 +96,6 @@ const SCRIPT_STATE = {
 		if (!this.state.chunkLoader) {
 			// persistent will keep created chunks loaded across server restarts, until unloaded manually
 			this.state.chunkLoader = new ChunkLoader(this.state.dimension, { persistent: true, logs: true });
-			
 		}
 	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
@@ -122,7 +122,7 @@ const SCRIPT_STATE = {
 	/** run once, before onStart */
 	onRegister(){
 		
-	}, //?: null,
+	},
 	
 	state: {
 		// script instance specific
