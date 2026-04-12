@@ -95,14 +95,15 @@ const SCRIPT_STATE = {
 	}, //? : null,
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
+		world.sendMessage("onstop")
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
 	}, //? : null,
 	/** run at each tick interval */
 	onTick(){
-		world.sendMessage("1234")
-		const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
+		world.sendMessage("ontick")
+		const myActivity = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = myActivity;
 	}, //? : null,
