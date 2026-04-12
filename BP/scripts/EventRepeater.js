@@ -2,42 +2,7 @@
 import { system, world, Vector3 } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 
-
-
-// Store current job + cancel state
-const SCRIPT_STATE = {
-	// @todo constructor registers?
-	// script instance generic
-	namespace: `chunkGen`,
-	interval: 20,
-	jobId: null,
-	id: null,
-	step: null,
-	debug: true,
-	/* //@todo do i want these? does it simplify things?
-	onStart: ()=>{}, //? : null,
-	onStop: ()=>{}, //? : null,
-	onTick: ()=>{}, //? : null,
-	unregister: ()=>{}, //?: null,
-	*/
-	state: {
-		// script instance specific
-		root: null,
-		lastCoords: null,
-		lastTick: null,
-	}
-}
-const chunkSize = 16;
-const startJobId = `${SCRIPT_STATE.namespace}:start`;
-const stopJobId = `${SCRIPT_STATE.namespace}:stop`;
-const debugJobId = `${SCRIPT_STATE.namespace}:dbg`;
-function debugPrint() {
-	if (SCRIPT_STATE.debug) {
-		world.sendMessage(...arguments);
-	} else {
-		console.log(...arguments);
-	}
-}
+// @todo refactor script state layout
 function roundForChunkEdge(value) {
 	if (value >= 0) {
 		return value - (value % chunkSize);
@@ -105,21 +70,64 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
+
+// Store current job + cancel state
+const SCRIPT_STATE = {
+	// @todo constructor registers?
+	// script instance generic
+	namespace: `chunkGen`,
+	interval: 20,
+	jobId: null,
+	id: null,
+	step: null,
+	debug: true,
+	/* //@todo do i want these? does it simplify things?
+	onStart: ()=>{}, //? : null,
+	onStop: ()=>{}, //? : null,
+	onTick: ()=>{}, //? : null,
+	unregister: ()=>{}, //?: null,
+	*/
+	state: {
+		// script instance specific
+		root: null,
+		lastCoords: null,
+		lastTick: null,
+	}
+}
+const chunkSize = 16;
+const startJobId = `${SCRIPT_STATE.namespace}:start`;
+const stopJobId = `${SCRIPT_STATE.namespace}:stop`;
+const debugJobId = `${SCRIPT_STATE.namespace}:dbg`;
+function debugPrint() {
+	if (SCRIPT_STATE.debug) {
+		world.sendMessage(...arguments);
+	} else {
+		console.log(...arguments);
+	}
+}
+function dbgPrefix() {
+	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
+}
+
 function repeatableLoop(scriptState){
-	//debugPrint(`${dbgPrefix()}repeatable`);
-	debugPrint(`${dbgPrefix()}repeatable: arg '${scriptState?.step}' global '${SCRIPT_STATE?.step}' id '${scriptState?.jobId}'`);
+	debugPrint(`${dbgPrefix()}repeatable: step =${SCRIPT_STATE?.step}; id=${scriptState?.jobId}`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}\n\n${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.state.lastTick}`);
+		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+		// @todo refactor to onStop
+		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.state.lastTick}`);
 		scriptState.cancelRequested = null;
 		scriptState.jobId = null;
 		return;
 	}
-	const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
+	// const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
+	// @todo refactor to onTick 
+	const myActivity = scriptState.onTick();
 	debugPrint(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
 	// save persistent successful state
-	scriptState.state.lastTick = system.currentTick;
-	scriptState.state.lastCoords = myActivity;
+	// @todo move to onTick:
+	// scriptState.state.lastTick = system.currentTick;
+	// scriptState.state.lastCoords = myActivity;
 	scriptState.jobId=system.runTimeout(()=>{
 		debugPrint(`${dbgPrefix()}repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
@@ -127,15 +135,14 @@ function repeatableLoop(scriptState){
 	scriptState.step++;
 	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
 }
-function dbgPrefix() {
-	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
-}
+
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.jobId != null) {
 		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
 		return null;
 	}
+	// @todo refactor to onStart
 	if (scriptState.state.root != null && scriptState.step> 10) {
 		world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(scriptState.state.root)} #${scriptState.step}`)
 	} else {
