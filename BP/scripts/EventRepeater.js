@@ -244,7 +244,7 @@ JSON.debugStringify = (node) => {
 * Listen for script events
 */
 function recognizeMyEvents(event) {
-	
+	world.sendMessage(`${dbgPrefix()}1`)
 	if (event.jobId in jobHandler) {
 		debugPrint(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.jobId}`)
 		try {
