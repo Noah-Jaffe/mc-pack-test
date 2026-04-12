@@ -1,5 +1,5 @@
 "use strict";
-import { system, world, Vector3 } from "@minecraft/server";
+import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 
 // @todo refactor script state layout
@@ -71,7 +71,6 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	return ret;
 }
 
-// Store current job + cancel state
 const SCRIPT_STATE = {
 	// script instance generic
 	namespace: `chunkGen`,
@@ -139,23 +138,11 @@ function repeatableLoop(scriptState){
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
 		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
-		// @todo refactor to onStop
-		/*
-		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${scriptState.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(scriptState.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${scriptState.state.lastTick}`);
-		scriptState.cancelRequested = null;
-		scriptState.jobId = null;
-		*/ 
 		scriptState.onStop();
 		return;
 	}
-	// const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
-	// @todo refactor to onTick 
 	const myActivity = scriptState.onTick();
 	debugPrint(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
-	// save persistent successful state
-	// @todo move to onTick:
-	// scriptState.state.lastTick = system.currentTick;
-	// scriptState.state.lastCoords = myActivity;
 	scriptState.jobId=system.runTimeout(()=>{
 		debugPrint(`${dbgPrefix()}repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
@@ -164,29 +151,6 @@ function repeatableLoop(scriptState){
 	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
 }
 
-/*
-function startLoop(event, scriptState) {
-	// @todo read event.message for the custom args
-	if (scriptState.cancelRequested && scriptState.jobId != null) {
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
-		return null;
-	}
-	// @todo refactor to onStart
-	if (scriptState.state.root != null && scriptState.step> 10) {
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(scriptState.state.root)} #${scriptState.step}`)
-	} else {
-		scriptState.step = 0;
-		const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
-		scriptState.state.root = {x:startingLoc.x, z: startingLoc.z};
-		scriptState.cancelRequested = null;
-	}
-	debugPrint(`${dbgPrefix()}Queued start of loop`);
-	scriptState.jobId=system.runTimeout(()=>{
-		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
-		repeatableLoop(scriptState)
-	}, 1);
-}
-*/
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.jobId != null) {
