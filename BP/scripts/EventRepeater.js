@@ -81,7 +81,7 @@ const SCRIPT_STATE = {
 	step: null,
 	debug: true,
 	/** run once, before the first onTick */
-	onStart: (event)=>{
+	onStart(event){
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
@@ -93,19 +93,19 @@ const SCRIPT_STATE = {
 		}
 	}, //? : null,
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
-	onStop: ()=>{
+	onStop(){
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
 	}, //? : null,
 	/** run at each tick interval */
-	onTick: ()=>{
+	onTick(){
 		const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = myActivity;
 	}, //? : null,
 	/** run once, before onStart */
-	onRegister: ()=>{
+	onRegister(){
 		
 	}, //?: null,
 	
