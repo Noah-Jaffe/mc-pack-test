@@ -1,4 +1,4 @@
-class IChunkManager {
+export class IChunkManager {
     load(position) {
         throw new Error("Method load not implemented");
     }
@@ -12,4 +12,3 @@ class IChunkManager {
         throw new Error("Method list not implemented");
     }
 }
-export { IChunkManager };
