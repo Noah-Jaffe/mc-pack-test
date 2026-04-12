@@ -100,6 +100,7 @@ const SCRIPT_STATE = {
 	}, //? : null,
 	/** run at each tick interval */
 	onTick(){
+		world.sendMessage("1234")
 		const myActivity = getChunkAtStep(scriptState?.state.root?.x ?? 0, scriptState?.state.root?.z ?? 0, scriptState.step);
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = myActivity;
