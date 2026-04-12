@@ -81,7 +81,7 @@ const SCRIPT_STATE = {
 	debug: true,
 	/** run once, before the first onTick */
 	onStart(event){
-		world.sendMessage("onstart")
+		world.sendMessage("onstart");
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
@@ -90,22 +90,35 @@ const SCRIPT_STATE = {
 			const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
 			this.state.root = {x:startingLoc.x, z: startingLoc.z};
 			this.cancelRequested = null;
+			this.state.dimension = event?.sourceEntity?.dimension ?? world.getDimension('overworld');
 		}
-	}, //? : null,
+		if (!this.state.chunkLoader) {
+			// persistent will keep created chunks loaded across server restarts, until unloaded manually
+			this.state.chunkLoader = new ChunkLoader(this.state.dimension, { persistent: true, logs: true });
+			
+		}
+	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
 		world.sendMessage("onstop")
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
-	}, //? : null,
+		this.state.chunkLoader = null;
+	},
 	/** run at each tick interval */
 	onTick(){
 		world.sendMessage("ontick")
-		const myActivity = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
+		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
+		coords.y = -64;
+		
+		this.state.chunkLoader.load(coords).then(() => {
+			dimension.setBlockType(destination, 'minecraft:glowstone')
+			chunk.unload(destination)
+		});
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = myActivity;
-	}, //? : null,
+	},
 	/** run once, before onStart */
 	onRegister(){
 		
@@ -116,6 +129,8 @@ const SCRIPT_STATE = {
 		root: null,
 		lastCoords: null,
 		lastTick: null,
+		chunkLoader: null,
+		dimension: null,
 	}
 }
 const chunkSize = 16;
@@ -353,5 +368,5 @@ sim.tick(25); // simulate ticks
 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
-		world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-	}, 20*5);
+	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+}, 20*5);
