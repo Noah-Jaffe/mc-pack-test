@@ -244,17 +244,16 @@ JSON.debugStringify = (node) => {
 * Listen for script events
 */
 function recognizeMyEvents(event) {
-	world.sendMessage(`${dbgPrefix()}1`)
-	if (event.jobId in jobHandler) {
-		debugPrint(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.jobId}`)
+	if (event.id in jobHandler) {
+		debugPrint(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`)
 		try {
-			jobHandler[event.jobId](event, SCRIPT_STATE);
+			jobHandler[event.id](event, SCRIPT_STATE);
 		} catch (e) {
-			debugPrint(`${ColorCodes.error}Error in: ${event.jobId} ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
+			debugPrint(`${ColorCodes.error}Error in: ${event.id} ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
 			debugPrint(`${ColorCodes.error}${e}`);
 			console.error(e);
 		}
-		debugPrint(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.jobId}`)
+		debugPrint(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.id}`)
 	}
 	
 }
