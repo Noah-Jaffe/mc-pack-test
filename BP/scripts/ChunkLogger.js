@@ -1,4 +1,4 @@
-class ChunkLogger {
+export class ChunkLogger {
     #enabled;
     #prefix = "ChunkLoader";
     constructor(enabled = false) {
@@ -47,5 +47,3 @@ class ChunkLogger {
         console.log(`${this.#prefix}: ${message}`);
     }
 }
-
-export { ChunkLogger };
