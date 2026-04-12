@@ -82,6 +82,7 @@ const SCRIPT_STATE = {
 	debug: true,
 	/** run once, before the first onTick */
 	onStart(event){
+		world.sendMessage("onstart")
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
