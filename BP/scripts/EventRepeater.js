@@ -112,10 +112,10 @@ const SCRIPT_STATE = {
 		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
 		coords.y = -64;
 		
-		this.state.chunkLoader.load(coords).then(() => {
+		(async () => await this.state.chunkLoader.load(coords).then(() => {
 			dimension.setBlockType(destination, 'minecraft:glowstone')
 			chunk.unload(destination)
-		});
+		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = myActivity;
 	},
