@@ -112,14 +112,13 @@ const SCRIPT_STATE = {
 		world.sendMessage("ontick")
 		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
 		coords.y = -64;
-		
 		(async () => await this.state.chunkLoader.load(coords).then(() => {
 			world.sendMessage ("then!")
-			dimension.setBlockType(destination, 'minecraft:glowstone')
-			chunk.unload(destination)
+			this.state.dimension.setBlockType(coords, 'minecraft:glowstone')
+			chunk.unload(coords)
 		}))();
 		this.state.lastTick = system.currentTick;
-		this.state.lastCoords = myActivity;
+		this.state.lastCoords = coords;
 	},
 	/** run once, before onStart */
 	onRegister(){
@@ -372,6 +371,6 @@ system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 	world.sendMessage(
-  JSON.stringify(Object.getOwnPropertyNames(world))
+  JSON.stringify(Object.keys(world))
 );
 }, 20*5);
