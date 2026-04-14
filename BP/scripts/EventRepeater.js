@@ -366,11 +366,7 @@ sim.fireScriptEvent("chunkGen:start");
 sim.tick(25); // simulate ticks
 
 */
-const getAllOwnMethods = (obj) => {
-  return .filter((key) => {
-    return typeof obj[key] === "function";
-  });
-};
+
  
 // Usage
 console.log(getAllOwnMethods(sampleObj)); 
