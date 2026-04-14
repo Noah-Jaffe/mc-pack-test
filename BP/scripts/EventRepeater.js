@@ -366,11 +366,19 @@ sim.fireScriptEvent("chunkGen:start");
 sim.tick(25); // simulate ticks
 
 */
-
+const getAllOwnMethods = (obj) => {
+  return .filter((key) => {
+    return typeof obj[key] === "function";
+  });
+};
+ 
+// Usage
+console.log(getAllOwnMethods(sampleObj)); 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 	world.sendMessage(
-  JSON.stringify(Object.keys(world))
+  JSON.stringify(Reflect.ownKeys(world))
 );
+world.sendMessage(JSON.stringify(Reflect.ownKeys(system)))
 }, 20*5);
