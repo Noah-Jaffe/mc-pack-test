@@ -97,6 +97,7 @@ const SCRIPT_STATE = {
 			// persistent will keep created chunks loaded across server restarts, until unloaded manually
 			this.state.chunkLoader = new ChunkLoader(this.state.dimension, { persistent: true, logs: true });
 		}
+		this.state.chunkLoader.checkWorld().then(e=>world.sendMessage(`"check wotld ${e}`)) 
 	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
