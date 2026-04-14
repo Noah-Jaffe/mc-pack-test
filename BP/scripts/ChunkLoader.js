@@ -45,7 +45,14 @@ export class ChunkLoader extends IChunkManager {
 		if (this.#persistent)
 		this.#synchronizeChunks();
 	}
-	
+	async checkWorld(){
+		try {
+			world.sendMessage("%%%%%%%%%6666666")
+			return "yes"
+		} catch (e) {
+			return "no"
+		}
+	}
 	async #synchronizeChunks() {
 		const savedChunks = world.getDynamicPropertyIds()
 		.filter(propId => propId.startsWith('CL_') && world.getDynamicProperty(propId));
