@@ -31,6 +31,12 @@ export class ChunkLoader extends IChunkManager {
 	#persistent;
 	constructor(dimension, { persistent = false, logs = false } = {}) {
 		super();
+		if (!this.#tickingAreaManager) {
+			this.#tickingAreaManager = world.tickingAreaManager;
+		}
+		if (!this.#tickingAreaManager) {
+			world.sendMessage("NO WORLD.tickingAreaManager?!")
+		}
 		this.#dimension = dimension;
 		this.#persistent = persistent;
 		this.#logger = new ChunkLogger(logs);
