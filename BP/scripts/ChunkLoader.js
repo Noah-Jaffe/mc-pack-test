@@ -36,9 +36,8 @@ export class ChunkLoader extends IChunkManager {
 		}
 		if (!this.#tickingAreaManager) {
 			world.sendMessage("NO WORLD.tickingAreaManager?!")
-			world.sendMessage(
-  JSON.stringify(Object.getOwnPropertyNames(world))
-);
+			world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(world)));
+			world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(system)));
 		}
 		this.#dimension = dimension;
 		this.#persistent = persistent;
