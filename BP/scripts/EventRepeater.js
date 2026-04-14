@@ -113,6 +113,7 @@ const SCRIPT_STATE = {
 		coords.y = -64;
 		
 		(async () => await this.state.chunkLoader.load(coords).then(() => {
+			world.sendMessage ("then!")
 			dimension.setBlockType(destination, 'minecraft:glowstone')
 			chunk.unload(destination)
 		}))();
