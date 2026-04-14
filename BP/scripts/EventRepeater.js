@@ -371,4 +371,7 @@ sim.tick(25); // simulate ticks
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+	world.sendMessage(
+  JSON.stringify(Object.getOwnPropertyNames(world))
+);
 }, 20*5);
