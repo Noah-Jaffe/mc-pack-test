@@ -381,4 +381,4 @@ system.runTimeout(()=>{
   JSON.stringify(Reflect.ownKeys(world))
 );
 world.sendMessage(JSON.stringify(Reflect.ownKeys(system)))
-}, 20*5);
+}, 20*15);
