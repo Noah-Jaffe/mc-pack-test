@@ -377,8 +377,6 @@ console.log(getAllOwnMethods(sampleObj));
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-	world.sendMessage(
-  JSON.stringify(Reflect.ownKeys(world))
-);
-world.sendMessage(JSON.stringify(Reflect.ownKeys(system)))
+	world.sendMessage(JSON.stringify(world));
+world.sendMessage(JSON.stringify(system))
 }, 20*15);
