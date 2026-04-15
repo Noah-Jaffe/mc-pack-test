@@ -1,3 +1,6 @@
+import { ColorCodes } from "./ColorCodes.js";
+import { mconsole as console } from "./debug.js";
+
 export class ChunkLogger {
     #enabled;
     #prefix = "ChunkLoader";
@@ -19,6 +22,7 @@ export class ChunkLogger {
 
     synchronized(key) {
         if (!this.#enabled) return;
+        
         console.log(`${this.#prefix}: Chunks synchronized: ${key}`);
     }
 
