@@ -122,7 +122,8 @@ const SCRIPT_STATE = {
 	},
 	/** run once, before onStart */
 	onRegister(){
-		
+		world.sendMessage(`ws: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+	console.log(`cl: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 	},
 	
 	state: {
@@ -341,5 +342,5 @@ sim.tick(25); // simulate ticks
 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
-	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+	world.sendMessage(`ar: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 }, 20*5);
