@@ -11,9 +11,9 @@
 */
 import { Dimension, world } from "@minecraft/server";
 import { IChunkManager } from "./Interfaces/IChunkManager.js";
-import { ChunkLogger } from "./ChunkLogger.js";
 import { Chunk } from "./Chunk.js";
 import { ColorCodes} from "./ColorCodes.js";
+import { mconsole as console } from "./debug.js";
 
 const LOADED_CHUNKS = new Map();
 const DIMENSION_ID_MAP = {
@@ -28,16 +28,14 @@ export class ChunkLoader extends IChunkManager {
 	#tickingAreaManager = world.tickingAreaManager;
 	#limit;
 	#count;
-	#logger;
 	#persistent;
-	constructor(dimension, { persistent = false, logs = false } = {}) {
+	constructor(dimension, { persistent = false } = {}) {
 		super();
 		this.#dimension = dimension;
 		this.#persistent = persistent;
-		this.#logger = new ChunkLogger(logs);
 		this.#count = this.#tickingAreaManager.chunkCount;
 		this.#limit = this.#tickingAreaManager.maxChunkCount;
-		this.#logger.info(`NOTE: max ticking areas = ${this.#limit}`);
+		console.info(`NOTE: max ticking areas = ${this.#limit}`);
 		if (this.#persistent)
 		this.#synchronizeChunks();
 	}
@@ -54,19 +52,19 @@ export class ChunkLoader extends IChunkManager {
 			const location = { x: x * 16, z: z * 16 };
 			if (this.#tickingAreaManager.getTickingArea(key)) {
 				LOADED_CHUNKS.set(key, new Chunk(location, this.#dimension));
-				this.#logger.synchronized(key);
+				console.log(`synchronized ${key}`);
 				continue;
 			}
 			const promise = this.load(location).then(() => {
-				this.#logger.synchronized(key);
+				console.log(`synchronized ${key}`);
 			}).catch((error) => {
-				this.#logger.error(`Failed to synchronize chunk ${key}: ${error}`);
+				console.error(`Failed to synchronize chunk ${key}: ${error}`);
 				world.setDynamicProperty(key);
 			});
 			promises.push(promise);
 		}
 		await Promise.all(promises);
-		this.#logger.info(`Synchronization complete: ${alreadyLoaded + promises.length} chunks loaded`);
+		console.log(`Synchronization complete: ${alreadyLoaded + promises.length} chunks loaded`);
 	}
 	
 	async load(location) {
@@ -89,7 +87,7 @@ export class ChunkLoader extends IChunkManager {
 			if (this.#persistent)
 			world.setDynamicProperty(key, true);
 			this.#count++;
-			this.#logger.loaded(key);
+			console.log(`loaded ${key}`);
 		}
 		return chunk;
 	}
@@ -105,7 +103,7 @@ export class ChunkLoader extends IChunkManager {
 		if (this.#persistent)
 		world.setDynamicProperty(key);
 		this.#count--;
-		this.#logger.unloaded(key);
+		console.log(`unloaded ${key}`);
 	}
 	
 	unloadAll() {
@@ -117,9 +115,9 @@ export class ChunkLoader extends IChunkManager {
 			if (this.#persistent)
 			world.setDynamicProperty(key);
 			this.#count--;
-			this.#logger.unloaded(key);
+			console.log(`unloaded ${key}`);
 		}
-		this.#logger.unloadedAll(keysToUnload.length);
+		console.log(`unloadedAll ${keysToUnload.length}`);
 	}
 	
 	isLoaded(location) {
