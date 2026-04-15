@@ -12,7 +12,7 @@
 import { Dimension, world } from "@minecraft/server";
 import { IChunkManager } from "./Interfaces/IChunkManager.js";
 import { Chunk } from "./Chunk.js";
-import { ColorCodes} from "./ColorCodes.js";
+import { ColorCodes } from "./ColorCodes.js";
 import { mconsole as console } from "./debug.js";
 
 const LOADED_CHUNKS = new Map();
