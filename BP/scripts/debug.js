@@ -137,4 +137,8 @@ for (const key of Object.getOwnPropertyNames(console)) {
 	};
 }
 
+system.runTimeout(()=>{
+	world.sendMessage(`debug.ja seems ok?`);
+}, 20*5);
+
 export { mconsole }; 
