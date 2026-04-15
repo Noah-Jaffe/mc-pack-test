@@ -115,7 +115,7 @@ const SCRIPT_STATE = {
 		(async () => await this.state.chunkLoader.load(coords).then(() => {
 			world.sendMessage ("then!")
 			this.state.dimension.setBlockType(coords, 'minecraft:glowstone')
-			chunk.unload(coords)
+			this.state.chunkLoader.unload(coords)
 		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = coords;
