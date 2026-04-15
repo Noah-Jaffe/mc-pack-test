@@ -2,6 +2,7 @@
 import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 import { ChunkLoader } from "./ChunkLoader.js";
+import { mconsole as console } from "./debug.js";
 
 // @todo refactor script state layout
 function roundForChunkEdge(value) {
@@ -19,7 +20,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	// Step 0 = center
 	if (stepIndex === 0) {
 		let ret = { x: baseX, z: baseZ };
-		debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+		console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 		return ret;
 	}
 	
@@ -68,7 +69,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
-	debugPrint(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+	console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
 
@@ -85,7 +86,7 @@ const SCRIPT_STATE = {
 		world.sendMessage("onstart");
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
-			world.sendMessage(`${dbgPrefix()}${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
+			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
 		} else {
 			this.step = 0;
 			const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
@@ -97,7 +98,6 @@ const SCRIPT_STATE = {
 			// persistent will keep created chunks loaded across server restarts, until unloaded manually
 			this.state.chunkLoader = new ChunkLoader(this.state.dimension, { persistent: true, logs: true });
 		}
-		this.state.chunkLoader.checkWorld().then(e=>world.sendMessage(`"check wotld ${e}`)) 
 	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
@@ -138,59 +138,54 @@ const chunkSize = 16;
 const startJobId = `${SCRIPT_STATE.namespace}:start`;
 const stopJobId = `${SCRIPT_STATE.namespace}:stop`;
 const debugJobId = `${SCRIPT_STATE.namespace}:dbg`;
-function debugPrint() {
-	if (SCRIPT_STATE.debug) {
-		world.sendMessage(...arguments);
-	} else {
-		console.log(...arguments);
-	}
-}
-function dbgPrefix() {
-	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
-}
 
 function repeatableLoop(scriptState){
-	debugPrint(`${dbgPrefix()}repeatable: step =${SCRIPT_STATE?.step}; id=${scriptState?.jobId}`);
+	console.log(`repeatable: step =${SCRIPT_STATE?.step}; id=${scriptState?.jobId}`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+		world.sendMessage(`${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 		scriptState.onStop();
 		return;
 	}
 	const myActivity = scriptState.onTick();
-	debugPrint(`${dbgPrefix()}Action results: ${JSON.stringify(myActivity)}`);
+	console.log(`Action results: ${JSON.stringify(myActivity)}`);
 	scriptState.jobId=system.runTimeout(()=>{
-		debugPrint(`${dbgPrefix()}repeatable loop inner timeout running`);
+		console.log(`repeatable loop inner timeout running`);
 		repeatableLoop(scriptState)
 	}, SCRIPT_STATE.interval);
 	scriptState.step++;
-	debugPrint(`${dbgPrefix()}Queued for step ${scriptState.step}`);
+	console.log(`Queued for step ${scriptState.step}`);
 }
 
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.jobId != null) {
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
+		world.sendMessage(`${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
 		return null;
 	}
 	scriptState.onStart(event);
-	debugPrint(`${dbgPrefix()}Queued start of loop`);
+	console.log(`Queued start of loop`);
 	scriptState.jobId=system.runTimeout(()=>{
-		debugPrint(`${dbgPrefix()}starting loop inner timeout running`);
+		console.log(`starting loop inner timeout running`);
 		repeatableLoop(scriptState);
 	}, 1);
 }
 function stopLoop(event, scriptState) {
 	if (scriptState.jobId == null){
-		world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`)
+		world.sendMessage(`${ColorCodes.warning}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`)
 		return;
 	}
 	scriptState.cancelRequested = true;
-	world.sendMessage(`${dbgPrefix()}${ColorCodes.warning}Raised the ${SCRIPT_STATE.namespace} stop flag!`)
+	world.sendMessage(`${ColorCodes.warning}Raised the ${SCRIPT_STATE.namespace} stop flag!`)
 }
 
 function dbgCmd(event, scriptState){
-	debugPrint({ rawtext: [ {text: "version "}, {translate: "pack.description"}]})
+	if (typeof (console.toggle) != "undefined") {
+		const curr = console.enabled;
+		console.toggle();
+		world.sendMessage(`${ColorCodes.blue}console debug mode set from ${curr ? ColorCodes.green : ColorCodes.red}${!!curr}${ColorCodes.blue} to ${console.enabled ? ColorCodes.green : ColorCodes.red}${!!console.enabled}`);
+	}
+	
 }
 
 const jobHandler = {
@@ -199,44 +194,21 @@ const jobHandler = {
 	[debugJobId]: dbgCmd,
 	
 }
-JSON.debugStringify = (node) => {
-	let root = true;
-	return JSON.stringify(node, (key, value) => {
-		if (root && typeof(value) == "object") {
-			root = false;
-			var replacement = {};
-			for (var k in value) {
-				if (Object.hasOwnProperty.call(value, k)) {
-					replacement[`${ColorCodes.yellow}${k}${ColorCodes.reset}`] = value[k];
-				}
-			}
-			return replacement;
-		}
-		root = false;
-		switch (typeof (value)) {
-			case "number":
-				return parseFloat(value.toFixed(2));
-				case "function":
-					return value.toString();
-		}
-		return value;
-	}, 0.1)
-}
 
 /**
 * Listen for script events
 */
 function recognizeMyEvents(event) {
 	if (event.id in jobHandler) {
-		debugPrint(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`)
+		console.log(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`);
 		try {
 			jobHandler[event.id](event, SCRIPT_STATE);
 		} catch (e) {
-			debugPrint(`${ColorCodes.error}Error in: ${event.id} ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
-			debugPrint(`${ColorCodes.error}${e}`);
+			console.log(`${ColorCodes.error}Error in: ${event.id} ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
+			console.log(`${ColorCodes.error}${e}`);
 			console.error(e);
 		}
-		debugPrint(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.id}`)
+		console.log(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.id}`);
 	}
 	
 }
@@ -370,4 +342,4 @@ sim.tick(25); // simulate ticks
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-}, 20*15);
+}, 20*5);
