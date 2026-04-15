@@ -31,14 +31,6 @@ export class ChunkLoader extends IChunkManager {
 	#persistent;
 	constructor(dimension, { persistent = false, logs = false } = {}) {
 		super();
-		if (!this.#tickingAreaManager) {
-			this.#tickingAreaManager = world.tickingAreaManager;
-		}
-		if (!this.#tickingAreaManager) {
-			world.sendMessage("NO WORLD.tickingAreaManager?!")
-			world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(world)));
-			world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(system)));
-		}
 		this.#dimension = dimension;
 		this.#persistent = persistent;
 		this.#logger = new ChunkLogger(logs);
@@ -46,14 +38,6 @@ export class ChunkLoader extends IChunkManager {
 		this.#limit = this.#tickingAreaManager.maxChunkCount;
 		if (this.#persistent)
 		this.#synchronizeChunks();
-	}
-	async checkWorld(){
-		try {
-			world.sendMessage("%%%%%%%%%6666666")
-			return "yes"
-		} catch (e) {
-			return "no"
-		}
 	}
 	async #synchronizeChunks() {
 		const savedChunks = world.getDynamicPropertyIds()
