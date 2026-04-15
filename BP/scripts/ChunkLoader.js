@@ -13,6 +13,7 @@ import { Dimension, world } from "@minecraft/server";
 import { IChunkManager } from "./Interfaces/IChunkManager.js";
 import { ChunkLogger } from "./ChunkLogger.js";
 import { Chunk } from "./Chunk.js";
+import { ColorCodes} from "./ColorCodes.js";
 
 const LOADED_CHUNKS = new Map();
 const DIMENSION_ID_MAP = {
@@ -36,6 +37,7 @@ export class ChunkLoader extends IChunkManager {
 		this.#logger = new ChunkLogger(logs);
 		this.#count = this.#tickingAreaManager.chunkCount;
 		this.#limit = this.#tickingAreaManager.maxChunkCount;
+		this.#logger.info(`NOTE: max ticking areas = ${this.#limit}`);
 		if (this.#persistent)
 		this.#synchronizeChunks();
 	}
