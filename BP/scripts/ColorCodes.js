@@ -34,7 +34,7 @@ export const ColorCodes /* {[colorKey: string]: string} */ = {
 	
 	// aliases:
 	"debug": "§6",
-	"warning": "§e",
+	"warn": "§e",
 	"info": "§f",
 	"error": "§c",
 }
