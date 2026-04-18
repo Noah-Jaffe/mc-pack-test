@@ -2,8 +2,9 @@
 import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 import { ChunkLoader } from "./ChunkLoader.js";
-import { mconsole as console } from "./debug.js";
-mconsole._logger = world.sendMessage;
+import { mconsole as console } from "./debug.js"; 
+world.sendMessage(typeof(world.sendMessage));
+mconsole._logger = (a)=> world.sendMessage(a);
 // @todo refactor script state layout
 function roundForChunkEdge(value) {
 	if (value >= 0) {
