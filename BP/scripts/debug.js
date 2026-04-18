@@ -112,7 +112,6 @@ for (const key of Object.getOwnPropertyNames(console)) {
 		// mconsole[key] = console[key];
 		continue;
 	}
-	
 	// duplicate/"override" the console function 
 	mconsole[key] = function (...args) {
 		// Call original and store result for consistent returns
@@ -140,5 +139,6 @@ for (const key of Object.getOwnPropertyNames(console)) {
 		// Return original return value
 		return result;
 	};
+	runTimeout(()=>world.sendMessage(`mconsole.${key} = ${mconsole[key]}`), 20)
 }
 export { mconsole }; 
