@@ -139,6 +139,6 @@ for (const key of Object.getOwnPropertyNames(console)) {
 		// Return original return value
 		return result;
 	};
-	runTimeout(()=>world.sendMessage(`mconsole.${key} = ${mconsole[key]}`), 20)
+	system.runTimeout(()=>world.sendMessage(`mconsole.${key} = ${mconsole[key]}`), 20)
 }
 export { mconsole }; 
