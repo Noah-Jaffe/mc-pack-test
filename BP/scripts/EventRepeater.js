@@ -87,7 +87,7 @@ const SCRIPT_STATE = {
 		world.sendMessage("onstart");
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
-			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`)
+			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`);
 		} else {
 			this.step = 0;
 			const startingLoc = event?.sourceEntity?.location ?? {x: 0, z: 0};
@@ -102,7 +102,7 @@ const SCRIPT_STATE = {
 	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
-		world.sendMessage("onstop")
+		world.sendMessage("onstop");
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
@@ -110,13 +110,13 @@ const SCRIPT_STATE = {
 	},
 	/** run at each tick interval */
 	onTick(){
-		world.sendMessage("ontick")
+		world.sendMessage("ontick");
 		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
 		coords.y = -64;
 		(async () => await this.state.chunkLoader.load(coords).then(() => {
-			world.sendMessage ("then!")
-			this.state.dimension.setBlockType(coords, 'minecraft:glowstone')
-			this.state.chunkLoader.unload(coords)
+			world.sendMessage ("then!");
+			this.state.dimension.setBlockType(coords, 'minecraft:glowstone');
+			this.state.chunkLoader.unload(coords);
 		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = coords;
@@ -135,7 +135,7 @@ const SCRIPT_STATE = {
 		chunkLoader: null,
 		dimension: null,
 	}
-}
+};
 const chunkSize = 16;
 const startJobId = `${SCRIPT_STATE.namespace}:start`;
 const stopJobId = `${SCRIPT_STATE.namespace}:stop`;
@@ -153,7 +153,7 @@ function repeatableLoop(scriptState){
 	console.log(`Action results: ${JSON.stringify(myActivity)}`);
 	scriptState.jobId=system.runTimeout(()=>{
 		console.log(`repeatable loop inner timeout running`);
-		repeatableLoop(scriptState)
+		repeatableLoop(scriptState);
 	}, SCRIPT_STATE.interval);
 	scriptState.step++;
 	console.log(`Queued for step ${scriptState.step}`);
@@ -174,11 +174,11 @@ function startLoop(event, scriptState) {
 }
 function stopLoop(event, scriptState) {
 	if (scriptState.jobId == null){
-		world.sendMessage(`${ColorCodes.warning}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`)
+		world.sendMessage(`${ColorCodes.warning}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 		return;
 	}
 	scriptState.cancelRequested = true;
-	world.sendMessage(`${ColorCodes.warning}Raised the ${SCRIPT_STATE.namespace} stop flag!`)
+	world.sendMessage(`${ColorCodes.warning}Raised the ${SCRIPT_STATE.namespace} stop flag!`);
 }
 
 function dbgCmd(event, scriptState){
@@ -195,7 +195,7 @@ const jobHandler = {
 	[stopJobId]: stopLoop,
 	[debugJobId]: dbgCmd,
 	
-}
+};
 
 /**
 * Listen for script events
