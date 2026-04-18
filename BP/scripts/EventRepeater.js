@@ -115,7 +115,6 @@ const SCRIPT_STATE = {
 		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = coords;
-		return this.state.lastCoords;
 	},
 	/** run once, before onStart */
 	onRegister(){
