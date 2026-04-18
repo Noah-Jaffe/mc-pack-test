@@ -76,7 +76,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 const SCRIPT_STATE = {
 	// script instance generic
 	namespace: `chunkGen`,
-	interval: 20,
+	interval: 5,
 	jobId: null,
 	id: null,
 	step: null,
@@ -144,8 +144,7 @@ function repeatableLoop(scriptState){
 		scriptState.onStop();
 		return;
 	}
-	const myActivity = scriptState.onTick();
-	console.debug(`Action results: ${JSON.stringify(myActivity)}`);
+	scriptState.onTick();
 	scriptState.jobId=system.runTimeout(()=>{
 		// console.debug(`repeatable loop inner timeout running`);
 		repeatableLoop(scriptState);
