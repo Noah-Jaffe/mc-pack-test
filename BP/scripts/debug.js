@@ -1,9 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
-system.runTimeout(()=>{
-	world.sendMessage(`debug.js seems ok?`);
-	
-}, 20*3);
+
 const DEFAULT_DEBUG_MODE = true;
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
@@ -144,10 +141,4 @@ for (const key of Object.getOwnPropertyNames(console)) {
 		return result;
 	};
 }
-
-system.runTimeout(()=>{
-	world.sendMessage(`debug.js seems ok!!!`);
-	
-}, 20*5);
-
 export { mconsole }; 
