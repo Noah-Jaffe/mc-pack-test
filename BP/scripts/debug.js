@@ -1,6 +1,9 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
-
+system.runTimeout(()=>{
+	world.sendMessage(`debug.js seems ok?`);
+	
+});
 const DEFAULT_DEBUG_MODE = true;
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
@@ -138,7 +141,10 @@ for (const key of Object.getOwnPropertyNames(console)) {
 }
 
 system.runTimeout(()=>{
-	world.sendMessage(`debug.js seems ok?`);
+	world.sendMessage(`debug.js seems ok!!!`);
+	
+}, 20*5);
+system.runTimeout(()=> {
 	world.sendMessage(typeof(world.sendMessage))
 	world.sendMessage(typeof(mconsole._logger))
 	try {
@@ -147,6 +153,6 @@ system.runTimeout(()=>{
 		world.sendMessage(e);
 		world.sendMessage(e.stack)
 	}
-}, 20*2);
+}, 20*6);
 
 export { mconsole }; 
