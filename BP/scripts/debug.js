@@ -149,22 +149,5 @@ system.runTimeout(()=>{
 	world.sendMessage(`debug.js seems ok!!!`);
 	
 }, 20*5);
-system.runTimeout(()=> {
-	world.sendMessage(typeof(world.sendMessage))
-	world.sendMessage(typeof(mconsole._logger))
-	try {
-		mconsole._logger = world.sendMessage
-
-	} catch(e) {
-		world.sendMessage(`${ColorCodes.error}failed to set logger?${e}`);
-	}
-		try {
-			mconsole._logger("hello world")
-		//mconsole._logger("hello world")
-	} catch(e) {
-		world.sendMessage(`${ColorCodes.error}failed to print from logger?${e}`);
-	}
-	world.sendMessage("done test")
-}, 20*6);
 
 export { mconsole }; 
