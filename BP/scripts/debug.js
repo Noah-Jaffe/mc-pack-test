@@ -1,7 +1,7 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 
-const DEFAUL_DEBUG_MODE = true;
+const DEFAULT_DEBUG_MODE = true;
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
 * @retueh {string}
@@ -40,13 +40,12 @@ export function debugPrefix() {
 	return `${ColorCodes.gold}${new Date().toLocaleTimeString("en-us", { hour:"2-digit", minute:"2-digit", second:"2-digit", fractionalSecondDigits: 3, hour12:false })} ${ColorCodes.blue}(${ColorCodes.yellow}${system.currentTick}${ColorCodes.blue})${ColorCodes.reset}:`;
 }
 
-class mconsole{
 /**
 * mconsole is a mimic of js console, but also can toggle printing to mc ""console""
 * @property {bool} enabled - if printing to the additional mc console is enabled.
 * @property {function} logger - the function to call that is the additional mc console
 */
-//const mconsole = {
+const mconsole = {
 	/** @property {bool} _isEnabled - internal state to do printing to additional mc console or not
 	* @type {bool}
 	*/
@@ -99,8 +98,8 @@ class mconsole{
 	logger(value) {
 		return this._logger(value);
 	},
-//};
-constructor(){
+};
+
 // dynamically duplicate console
 for (const key of Object.getOwnPropertyNames(console)) {
 	if (typeof console[key] !== "function") {
@@ -138,8 +137,6 @@ for (const key of Object.getOwnPropertyNames(console)) {
 	};
 }
 
-}
-}
 system.runTimeout(()=>{
 	world.sendMessage(`debug.js seems ok?`);
 }, 20*5);
