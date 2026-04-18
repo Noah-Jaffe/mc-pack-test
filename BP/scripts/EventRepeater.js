@@ -20,7 +20,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	// Step 0 = center
 	if (stepIndex === 0) {
 		let ret = { x: baseX, z: baseZ };
-		console.debug(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+		//console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 		return ret;
 	}
 	
@@ -69,7 +69,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
-	console.debug(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+	//console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
 
@@ -145,11 +145,11 @@ function repeatableLoop(scriptState){
 	}
 	scriptState.onTick();
 	scriptState.jobId=system.runTimeout(()=>{
-		// console.debug(`repeatable loop inner timeout running`);
+		// console.log(`repeatable loop inner timeout running`);
 		repeatableLoop(scriptState);
 	}, SCRIPT_STATE.interval);
 	scriptState.step++;
-	// console.debug(`Queued for step ${scriptState.step}`);
+	// console.log(`Queued for step ${scriptState.step}`);
 }
 
 function startLoop(event, scriptState) {
@@ -161,7 +161,7 @@ function startLoop(event, scriptState) {
 	scriptState.onStart(event);
 	console.log(`Queued start of loop`);
 	scriptState.jobId=system.runTimeout(()=>{
-		console.debug(`starting loop inner timeout running`);
+		console.log(`starting loop inner timeout running`);
 		repeatableLoop(scriptState);
 	}, 1);
 }
@@ -213,8 +213,7 @@ system.runTimeout(()=>{
 	world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(console)));
 	console.log("hi")
 	console.warn("hi")
-	console.error("hi")
-	console.debug("hi")
+	console.error("hi"))
 	SCRIPT_STATE.onRegister();
 	// world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 }, 20*5);
