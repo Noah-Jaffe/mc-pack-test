@@ -80,7 +80,7 @@ const mconsole = {
 	* @type {function}
 	* @default {@link world.sendMessage}
 	*/ 
-	_logger: world.sendMessage,
+	_logger: (...args)=>world.sendMessage(...args),
 	/** @property {function} _logger - where to send the data to be logged - defaults to world.sendMessage */
 	get logger() {
 		return this._logger ?? world.sendMessage;
@@ -88,6 +88,11 @@ const mconsole = {
 	/** @property {function} _logger - where to send the data to be logged */
 	set logger(value) {
 		if (typeof value == "function") {
+			try {
+				value("testing to see if we can print from this function!")
+			} catch {
+				world.sendMessage("Invalid value given to set the logger function, expect errors to be printed!")
+			}
 			this._logger = value;
 		} else {
 			const e = new TypeError("`logger` must be a function!");
