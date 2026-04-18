@@ -139,6 +139,14 @@ for (const key of Object.getOwnPropertyNames(console)) {
 
 system.runTimeout(()=>{
 	world.sendMessage(`debug.js seems ok?`);
-}, 20*5);
+	world.sendMessage(typeof(world.sendMessage))
+	world.sendMessage(typeof(mconsole._logger))
+	try {
+		mconsole._logger("hello world")
+	} catch(e) {
+		world.sendMessage(e);
+		world.sendMessage(e.stack)
+	}
+}, 20*2);
 
 export { mconsole }; 
