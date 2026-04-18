@@ -3,7 +3,7 @@ import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 import { ChunkLoader } from "./ChunkLoader.js";
 import { mconsole as console } from "./debug.js"; 
-//mconsole._logger = (a)=> world.sendMessage(a);
+
 // @todo refactor script state layout
 function roundForChunkEdge(value) {
 	if (value >= 0) {
@@ -20,7 +20,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 	// Step 0 = center
 	if (stepIndex === 0) {
 		let ret = { x: baseX, z: baseZ };
-		console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+		console.debug(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 		return ret;
 	}
 	
@@ -69,7 +69,7 @@ function getChunkAtStep(raw_x, raw_z, stepIndex) {
 		x: baseX + x * chunkSize,
 		z: baseZ + z * chunkSize,
 	};
-	console.log(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
+	console.debug(`rx ${raw_x}, rz ${raw_z}, s ${stepIndex} => ${ret.x}, ${ret.z}`);
 	return ret;
 }
 
@@ -83,7 +83,6 @@ const SCRIPT_STATE = {
 	debug: true,
 	/** run once, before the first onTick */
 	onStart(event){
-		world.sendMessage("onstart");
 		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`);
@@ -101,7 +100,6 @@ const SCRIPT_STATE = {
 	},
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
-		world.sendMessage("onstop");
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
@@ -109,21 +107,19 @@ const SCRIPT_STATE = {
 	},
 	/** run at each tick interval */
 	onTick(){
-		world.sendMessage("ontick");
 		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
 		coords.y = -64;
 		(async () => await this.state.chunkLoader.load(coords).then(() => {
-			world.sendMessage ("then!");
 			this.state.dimension.setBlockType(coords, 'minecraft:glowstone');
 			this.state.chunkLoader.unload(coords);
 		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = coords;
+		return this.state.lastCoords;
 	},
 	/** run once, before onStart */
 	onRegister(){
-		world.sendMessage(`ws: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-	console.log(`cl: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+		world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 	},
 	
 	state: {
@@ -149,13 +145,13 @@ function repeatableLoop(scriptState){
 		return;
 	}
 	const myActivity = scriptState.onTick();
-	console.log(`Action results: ${JSON.stringify(myActivity)}`);
+	console.debug(`Action results: ${JSON.stringify(myActivity)}`);
 	scriptState.jobId=system.runTimeout(()=>{
-		console.log(`repeatable loop inner timeout running`);
+		// console.debug(`repeatable loop inner timeout running`);
 		repeatableLoop(scriptState);
 	}, SCRIPT_STATE.interval);
 	scriptState.step++;
-	console.log(`Queued for step ${scriptState.step}`);
+	// console.debug(`Queued for step ${scriptState.step}`);
 }
 
 function startLoop(event, scriptState) {
@@ -167,7 +163,7 @@ function startLoop(event, scriptState) {
 	scriptState.onStart(event);
 	console.log(`Queued start of loop`);
 	scriptState.jobId=system.runTimeout(()=>{
-		console.log(`starting loop inner timeout running`);
+		console.debug(`starting loop inner timeout running`);
 		repeatableLoop(scriptState);
 	}, 1);
 }
@@ -214,133 +210,8 @@ function recognizeMyEvents(event) {
 	
 }
 
-/*
-function createMockMinecraft() {
-let currentTick = 0;
-let nextJobId = 1;
-const jobs = new Map();
-const timeouts = [];
-
-const system = {
-get currentTick() {
-return currentTick;
-},
-
-runJob(gen) {
-const id = nextJobId++;
-jobs.set(id, gen);
-return id;
-},
-runTimeout(callback, delayTicks = 0) {
-const id = nextJobId++;
-const runAt = currentTick + Math.max(0, delayTicks);
-
-timeouts.push({
-runAt,
-callback
-});
-return id;
-},
-clearJob(id) {
-jobs.delete(id);
-},
-
-afterEvents: {
-scriptEventReceive: {
-subscribed: [], 
-subscribe: (cb)=>{
-system.afterEvents.scriptEventReceive.subscribed.push(cb);
-}
-}
-}
-};
-
-const world = {
-sendMessage(msg) {
-const stack = new Error("just for stack trace");
-msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
-console.trace(`[MSG @${currentTick}]`, msg, stack);
-}
-};
-
-function tick(n = 1) {
-for (let i = 0; i < n; i++) {
-currentTick++;
-console.log(`CURRENT TICK ${currentTick}`)
-
-// ---- RUN TIMEOUTS ----
-
-for (let j = timeouts.length - 1; j >= 0; j--) {
-if (timeouts[j].runAt <= currentTick) {
-try {
-timeouts[j].callback();
-} catch (e) {
-console.error("Timeout error:", e);
-}
-
-timeouts.splice(j, 1);
-}
-}
-
-// ---- RUN JOBS ----
-
-for (const [id, job] of [...jobs]) {
-try {
-const res = job.next();
-
-if (res.done) {
-jobs.delete(id);
-}
-
-} catch (e) {
-console.error("Job error:", e);
-jobs.delete(id);
-}
-}
-}
-}
-
-function fireScriptEvent(id, sourceEntity = null) {
-for (const scriptEventCallback of system.afterEvents.scriptEventReceive.subscribed) {
-
-scriptEventCallback({
-id,
-sourceEntity: sourceEntity ?? {
-location: { x: 0, y: 0, z: 0 },
-onScreenDisplay: {
-setActionBar: (msg) => {
-const stack = new Error("just for stack trace");
-msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
-console.trace(`[ACTIONBAR @${currentTick}]`, msg, stack);
-}
-}
-}
-});
-}
-}
-
-return { system, world, tick, fireScriptEvent };
-}
-
-
-
-const sim = createMockMinecraft();
-const system = sim.system;
-const world = sim.world;
-
-// Load your script (or paste it here)
-system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
-
-sim.tick(5);
-// Simulate commands
-sim.fireScriptEvent("chunkGen:start");
-
-// Run game loop
-sim.tick(25); // simulate ticks
-
-*/
-
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
-	world.sendMessage(`ar: ${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
+	SCRIPT_STATE.onRegister();
+	// world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 }, 20*5);
