@@ -209,13 +209,5 @@ function recognizeMyEvents(event) {
 }
 
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
-system.runTimeout(()=>{
-	console.log("hi")
-	console.warn("hi")
-	console.error("hi")
 	SCRIPT_STATE.onRegister();
-	// world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-	try {
-	world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(console)));}catch{}
-try{	world.sendMessage(JSON.stringify(Object.getOwnPropertyNames(mconsole)));}catch{}
 }, 20*5);
