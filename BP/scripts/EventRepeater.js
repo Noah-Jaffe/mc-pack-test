@@ -5,7 +5,6 @@ import { ChunkLoader } from "./ChunkLoader.js";
 import { mconsole as console } from "./debug.js"; 
 import { chunkSize, roundForChunkEdge, getChunkAtStep } from "./commmon/ChunkMath.js";
 
-system.runTimeout(()=>{world.sendMessage(typeof chunkSize)}, 60)
 const SCRIPT_STATE = {
 	// script instance generic
 	namespace: `chunkGen`,
