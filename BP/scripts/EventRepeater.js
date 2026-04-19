@@ -212,7 +212,7 @@ system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(()=>{
 	console.log("hi")
 	console.warn("hi")
-	console.error("hi"))
+	console.error("hi")
 	SCRIPT_STATE.onRegister();
 	// world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
 	try {
