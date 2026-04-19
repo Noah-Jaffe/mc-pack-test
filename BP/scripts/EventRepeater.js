@@ -139,7 +139,7 @@ function repeatableLoop(scriptState){
 	console.log(`repeatable: step =${SCRIPT_STATE?.step}; id=${scriptState?.jobId}`);
 	if (scriptState.cancelRequested) {
 		// abort loop enacted
-		world.sendMessage(`${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warning}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+		world.sendMessage(`${ColorCodes.warn}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) aborted!\n${ColorCodes.warn}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 		scriptState.onStop();
 		return;
 	}
@@ -155,7 +155,7 @@ function repeatableLoop(scriptState){
 function startLoop(event, scriptState) {
 	// @todo read event.message for the custom args
 	if (scriptState.cancelRequested && scriptState.jobId != null) {
-		world.sendMessage(`${ColorCodes.warning}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
+		world.sendMessage(`${ColorCodes.warn}Active ${SCRIPT_STATE.namespace} (${scriptState.jobId}) is in the process of aborting, please wait and try again!!`);
 		return null;
 	}
 	scriptState.onStart(event);
@@ -167,11 +167,11 @@ function startLoop(event, scriptState) {
 }
 function stopLoop(event, scriptState) {
 	if (scriptState.jobId == null){
-		world.sendMessage(`${ColorCodes.warning}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+		world.sendMessage(`${ColorCodes.warn}No active ${SCRIPT_STATE.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 		return;
 	}
 	scriptState.cancelRequested = true;
-	world.sendMessage(`${ColorCodes.warning}Raised the ${SCRIPT_STATE.namespace} stop flag!`);
+	world.sendMessage(`${ColorCodes.warn}Raised the ${SCRIPT_STATE.namespace} stop flag!`);
 }
 
 function dbgCmd(event, scriptState){
