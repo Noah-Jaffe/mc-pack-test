@@ -1,4 +1,4 @@
-
+/** @const {number} chunk size in blocks */
 export chunkSize = 16;
 
 /**
