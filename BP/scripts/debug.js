@@ -1,7 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
-import { IChunkManager } from "./Interfaces/IChunkManager.js";
-system.runTimeout(()=>{world.sendMessage(typeof IChunkManager)}, 60)
+
 const DEFAULT_DEBUG_MODE = true;
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
