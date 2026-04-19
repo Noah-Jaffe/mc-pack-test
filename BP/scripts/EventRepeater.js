@@ -3,7 +3,7 @@ import { system, world } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
 import { ChunkLoader } from "./ChunkLoader.js";
 import { mconsole as console } from "./debug.js"; 
-import { chunkSize } from "./commmon/ChunkMath.js";
+import { chunkSize as cs} from "./commmon/ChunkMath.js";
 // @todo refactor script state layout
 function roundForChunkEdge(value) {
 	if (value >= 0) {
@@ -130,7 +130,7 @@ const SCRIPT_STATE = {
 		dimension: null,
 	}
 };
-//const chunkSize = 16;
+const chunkSize = cs;
 const startJobId = `${SCRIPT_STATE.namespace}:start`;
 const stopJobId = `${SCRIPT_STATE.namespace}:stop`;
 const debugJobId = `${SCRIPT_STATE.namespace}:dbg`;
