@@ -1,5 +1,5 @@
 /** @const {number} chunk size in blocks */
-export chunkSize = 16;
+export const chunkSize = 16;
 
 /**
  * @param {number} value - the number to be rounded
