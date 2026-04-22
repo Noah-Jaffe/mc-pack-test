@@ -143,4 +143,7 @@ function recognizeMyEvents(event) {
 system.afterEvents.scriptEventReceive.subscribe(recognizeMyEvents);
 system.runTimeout(() => {
 	SCRIPT_STATE.onRegister();
+			world.sendMessage(`${ColorCodes.info}start ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.green}/scriptEvent ${SCRIPT_STATE.namespace}:start`);
+		world.sendMessage(`${ColorCodes.info}stop ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.light_red}/scriptEvent ${SCRIPT_STATE.namespace}:stop`);
+		world.sendMessage(`${ColorCodes.info}toggle debug ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.green}/scriptEvent ${SCRIPT_STATE.namespace}:debug`);
 }, 20*5);
