@@ -12,6 +12,7 @@ export /*abstract*/
 export /* abstract */ class RepeatableEvent {
 	namespace = null;
 	interval = 20;
+	step = 0;
 	state = {};
   /**
    * Called when the event starts.
