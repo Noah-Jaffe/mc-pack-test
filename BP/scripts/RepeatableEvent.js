@@ -1,29 +1,27 @@
 "use strict";
-import { world } from "@minecraft/server";
-import { debugPrefix } from "./debug.js";
+import { world, system } from "@minecraft/server";
+import { mconsole as console } from "./debug.js";
 
-export /*abstract*/ class RepeatableEvent {
-	
+/**
+ * @class RepeatableEvent
+ * Standard lifecycle from RepeatableEventManager:
+ * 1. World is loaded, then RepeatableEvent.onRegister is called.
+ * 2. Command is executed: `/scriptEvent <namespace>:start`, then the RepeatableEvent.onStart is called followed by the first RepeatableEvent.onTick
+ * 3. RepeatableEvent.onTick is called every RepeatableEvent.interval ticks.
+ * 4. Command is executed: `/scriptEvent <namespace>:stop`, then the RepeatableEvent.onStop is called. the following RepeatableEvent.onTick is expected to check 
+export /*abstract*/ 
+export /* abstract */ class RepeatableEvent {
+	namespace = null;
+	interval = 20;
+	state = {};
   /**
    * Called when the event starts.
    * Default: does nothing.
    * @param {Event} event - source event that Called the /scriptEvent command
-   * @param {ScriptState} scriptState - the ScriptState of the active event
    */
-  static onStart(event/*:Event*/, scriptState/*: ScriptState*/): void {
+  onStart(event/*:Event*/)/*: void */{
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called onStart`);
-  }
-
-  /**
-   * Called to check if event should run
-   * Default: always returns true.
-   * @param {Event} event - source event that Called the /scriptEvent command
-   * @param {ScriptState} scriptState - the ScriptState of the active event
-   */
-  static conditionCheck(event/*:Event*/, scriptState/*: ScriptState*/): boolean {
-  	world.sendMessage(`${debugPrefix()}Called conditionCheck`);
-    return true;
+    console.log(`Called onStart`);
   }
 
   /**
@@ -31,20 +29,18 @@ export /*abstract*/ class RepeatableEvent {
    * @note: should reset non-persistant values if needed
    * Default: does nothing.
    * @param {Event} event - source event that Called the /scriptEvent command
-   * @param {ScriptState} scriptState - the ScriptState of the active event
    */
-  static onStop(event/*:Event*/, scriptState/*: ScriptState*/): void {
+  onStop(event/*:Event*/)/*: void */{
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called onStop`);
+    console.log(`Called onStop`);
   }
   
   /**
-   * Called each time the script is activated (after onStart (once) and conditionCheck returned true)
+   * Called each time the script is activated - this is the repeatable event.
    * Default: does nothing.
-   * @param {ScriptState} scriptState - the ScriptState of the active event
    */
-  static doTick(scriptState/*: ScriptState*/): void {
+  onTick()/*: void */{
     // default no-op
-    world.sendMessage(`${debugPrefix()}Called doTick`);
+    console.log(`Called doTick`);
   }
 }
