@@ -1,5 +1,4 @@
 "use strict";
-import { world, system } from "@minecraft/server";
 import { mconsole as console } from "./debug.js";
 
 /**
