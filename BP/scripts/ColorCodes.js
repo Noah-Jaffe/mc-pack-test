@@ -1,4 +1,5 @@
-export const ColorCodes /* {[colorKey: string]: string} */ = {
+/** @const {[colorKey: string]: string} ColorCodesBase base color codes for in world color formatting */
+export const ColorCodesBase = {
 	"black": "§0",
 	"dark_blue": "§1",
 	"dark_green": "§2",
@@ -31,10 +32,21 @@ export const ColorCodes /* {[colorKey: string]: string} */ = {
 	"obfuscate": "§k",
 	"bold": "§l",
 	"italic": "§o",
-	
-	// aliases:
+	"underline": "§n",
+	"strikethrough": "§m",
+};
+/** @const {[colorKey: string]: string} ColorCodesAliases alias color codes for {@link ColorCodesBase} */
+export const ColorCodesAliases = {
 	"debug": "§6",
 	"warn": "§e",
 	"info": "§f",
 	"error": "§c",
-}
+	"under": "§n",
+	"strike": "§m",
+};
+
+/** @const {[colorKey: string]: string} ColorCodesBase base color codes for in world color formatting */
+export const ColorCodes = {
+	...ColorCodesBase,
+	...ColorCodesAliases,
+};
