@@ -71,7 +71,6 @@ export class AutoChunkGenerator extends RepeatableEvent {
 		this.step = 0;
 		this.namespace = namespace?.toString() ?? this.namespace;
 		this.interval = parseInt(interval) || this.interval;
-		//@todo I think dimension is set inside the ChunkLoader object
 		this.state.dimension = dimension ?? this.state?.dimension;
 		this.state.root = {
 			'x': root?.x ?? x ?? this.state?.root?.x ?? this.state?.lastCoords?.x ?? 0, 
