@@ -88,7 +88,6 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	 * @returns {void}
 	 */
 	onStart(event){
-		// @todo refactor to onStart
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`);
 		} else {
