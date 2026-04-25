@@ -51,10 +51,18 @@ export class AutoChunkGenerator extends RepeatableEvent {
 		lastTick: null,
 		chunkLoader: null,
 		dimension: null,
-	}
+	};
+	
+	/** command mapping keys are for /scriptEvent {this.namespace}:<key> -> calls this.<value>(event)
+	commandMapping: {
+	"start": "onStart",
+	"stop": "onStop",
+	"debug": "onDebug",
+	"dbg": "onDebug",
+	};
 	
 	/**
-	 * @lifecycle {0} - after "module loaded" and before {@link onRegister}.
+	* @lifecycle {0} - after "module loaded" and before {@link onRegister}.
 	* Creates an AutoChunkGenerator Event instance
 	* @param {Partial<AutoChunkGeneratorState> & { interval?: number }} [options] Instance configuration options.
 	* @param {number} [options.interval=20] Tick interval between executions.
@@ -82,13 +90,13 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	}
 	
 	/**
-	 * @lifecycle {2} Runs once before the first {@link onTick}.
-	 * Initializes root position, dimension, and creates the {@link ChunkLoader}.
-	 * @param {ScriptEventCommandMessageEvent} event
-	 * Source event that triggered the job.
-	 *
-	 * @returns {void}
-	 */
+	* @lifecycle {2} Runs once before the first {@link onTick}.
+	* Initializes root position, dimension, and creates the {@link ChunkLoader}.
+	* @param {ScriptEventCommandMessageEvent} event
+	* Source event that triggered the job.
+	*
+	* @returns {void}
+	*/
 	onStart(event){
 		// @todo read event.message for the custom args
 		if (this.state.root != null && this.step> 10) {
@@ -106,7 +114,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 		}
 	}
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
-	onStop(){
+	onStop(event){
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
@@ -124,13 +132,29 @@ export class AutoChunkGenerator extends RepeatableEvent {
 		this.state.lastCoords = coords;
 	}
 	/**
-	 * @@lifecycle {1} Runs once when the class/event is registered/subscribed for scriptEvents.
-	 * Outputs the command required to start this event. 
-	 * @todo: Also essentially a `/scriptEvent {@link namespace}:help`command?
-	 */
+	* @@lifecycle {1} Runs once when the class/event is registered/subscribed for scriptEvents.
+	* Outputs the command required to start this event. 
+	* @todo: Also essentially a `/scriptEvent {@link namespace}:help`command?
+	*/
 	onRegister(){
 		world.sendMessage(`${ColorCodes.info}start ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:start`);
 		world.sendMessage(`${ColorCodes.info}stop ${this.constructor.name} with\n${ColorCodes.light_red}/scriptEvent ${this.namespace}:stop`);
 		world.sendMessage(`${ColorCodes.info}toggle debug ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:debug`);
+	}
+	
+	/** on debug command, toggle debug printing */
+	onDebug(event) {
+		if (typeof (console.toggle) != "undefined") {
+			const curr = console.enabled;
+			let setTo = undefined;
+			if (event.message.toString().match(/true/gmi)) {
+				setTo = true;
+			} else if (event.message.toString().match(/false/gmi)) {
+				setTo = false;
+			}
+			console.toggle(setTo);
+			world.sendMessage(`${ColorCodes.blue}console debug mode set from ${curr ? ColorCodes.green : ColorCodes.red}${!!curr}${ColorCodes.blue} to ${console.enabled ? ColorCodes.green : ColorCodes.red}${!!console.enabled}`);
+			
+		}
 	}
 }
