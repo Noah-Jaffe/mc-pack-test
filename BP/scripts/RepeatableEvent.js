@@ -38,47 +38,47 @@ export /* abstract */ class RepeatableEvent {
 		}
 	}
 
-	// /**
-	// * Called when the event starts.
-	// * Default: does nothing.
-	// * @param {Event} event - source event that Called the /scriptEvent command
-	// */
-	// onStart(event/*:Event*/)/*: void */{
-	//   // default no-op
-	//   console.log(`Called onStart`);
-	// }
+	/**
+	* Called when the event starts.
+	* Default: does nothing.
+	* @param {Event} event - source event that Called the /scriptEvent command
+	*/
+	onStart(event/*:Event*/)/*: void */{
+	  // default no-op
+	  console.log(`Called onStart`);
+	}
 	
-	// /**
-	// * Called when stopping the event
-	// * @note: should reset non-persistant values if needed
-	// * Default: does nothing.
-	// * @param {Event} event - source event that Called the /scriptEvent command
-	// */
-	// onStop(event/*:Event*/)/*: void */{
-	//   // default no-op
-	//   console.log(`Called onStop`);
-	// }
+	/**
+	* Called when stopping the event
+	* @note: should reset non-persistant values if needed
+	* Default: does nothing.
+	* @param {Event} event - source event that Called the /scriptEvent command
+	*/
+	onStop(event/*:Event*/)/*: void */{
+	  // default no-op
+	  console.log(`Called onStop`);
+	}
 	
-	// /**
-	// * Called each time the script is activated - this is the repeatable event.
-	// * Default: does nothing.
-	// */
-	// onTick()/*: void */{
-	//   // default no-op
-	//   console.log(`Called doTick`);
-	// }
-	repeatableLoop(){
+	/**
+	* Called each time the script is activated - this is the repeatable event.
+	* Default: does nothing.
+	*/
+	onTick(event)/*: void */{
+	  // default no-op
+	  console.log(`Called doTick`);
+	}
+	repeatableLoop(event){
 		console.log(`repeatable: step =${this.step}; id=${this.jobId}`);
 		if (this.cancelRequested) {
 			// abort loop enacted
 			world.sendMessage(`${ColorCodes.warn}Active ${this.namespace} (${this.jobId}) aborted!`);//\n${ColorCodes.warn}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${}start`);
-			this.onStop();
+			this.onStop(event);
 			return;
 		}
-		this.onTick();
+		this.onTick(event);
 		this.jobId=system.runTimeout(()=>{
 			// console.log(`repeatable loop inner timeout running`);
-			this.repeatableLoop();
+			this.repeatableLoop(event);
 		}, this.interval);
 		this.step++;
 		// console.log(`Queued for step ${this.step}`);
@@ -93,7 +93,7 @@ export /* abstract */ class RepeatableEvent {
 		console.log(`Queued start of loop`);
 		this.jobId=system.runTimeout(()=>{
 			console.log(`starting loop inner timeout running`);
-			this.repeatableLoop();
+			this.repeatableLoop(event);
 		}, 1);
 	}
 	stopLoop(event) {
