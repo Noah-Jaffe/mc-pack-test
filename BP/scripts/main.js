@@ -4,7 +4,7 @@ import { ColorCodes } from "./ColorCodes.js";
 import { mconsole as console } from "./debug.js"; 
 
 // import custom command implementations here
-import { AutoChunkGenerator } from "./AutoChunkLoaderEvent.js"
+import { AutoChunkGenerator } from "./AutoChunkGeneratorEvent.js";
 
 const MY_PLUGINS = [
 	AutoChunkGenerator
