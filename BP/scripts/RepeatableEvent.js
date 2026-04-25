@@ -1,4 +1,5 @@
 "use strict";
+import { system, world } from "@minecraft/server";
 import { mconsole as console } from "./debug.js";
 
 /**
@@ -14,11 +15,13 @@ export /* abstract */ class RepeatableEvent {
 	interval = 20;
 	step = 0;
 	state = {};
+	jobId;
 	commandMapping = {};
 	constructor() {
-		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} )
+		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} );
+		system.afterEvents.scriptEventReceive.subscribe(this.onscriptEventReceive);
 	}
-	onScriptEvent(event) {
+	onScriptEventReceive(event) {
 		let id = event.id?.toString()?.toLowerCase().replace(this.namespace+":","");
 		if (id in this.commandMapping) {
 			console.log(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`);
@@ -61,5 +64,42 @@ export /* abstract */ class RepeatableEvent {
 	//   // default no-op
 	//   console.log(`Called doTick`);
 	// }
+	repeatableLoop(){
+		console.log(`repeatable: step =${this.step}; id=${this.jobId}`);
+		if (this.cancelRequested) {
+			// abort loop enacted
+			world.sendMessage(`${ColorCodes.warn}Active ${this.namespace} (${this.jobId}) aborted!\n${ColorCodes.warn}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+			this.onStop();
+			return;
+		}
+		this.onTick();
+		this.jobId=system.runTimeout(()=>{
+			// console.log(`repeatable loop inner timeout running`);
+			this.repeatableLoop();
+		}, this.interval);
+		this.step++;
+		// console.log(`Queued for step ${this.step}`);
+	}
+	startLoop(event) {
+		// @todo read event.message for the custom args
+		if (this.cancelRequested && this.jobId != null) {
+			world.sendMessage(`${ColorCodes.warn}Active ${this.namespace} (${this.jobId}) is in the process of aborting, please wait and try again!!`);
+			return null;
+		}
+		this.onStart(event);
+		console.log(`Queued start of loop`);
+		this.jobId=system.runTimeout(()=>{
+			console.log(`starting loop inner timeout running`);
+			this.repeatableLoop();
+		}, 1);
+	}
+	stopLoop(event) {
+		if (this.jobId == null){
+			world.sendMessage(`${ColorCodes.warn}No active ${this.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+			return;
+		}
+		this.cancelRequested = true;
+		world.sendMessage(`${ColorCodes.warn}Raised the ${this.namespace} stop flag!`);
+	}
 	
 }
