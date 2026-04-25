@@ -138,7 +138,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	*/
 	onRegister(){
 		world.sendMessage(`${ColorCodes.info}start ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:start`);
-		world.sendMessage(`${ColorCodes.info}stop ${this.constructor.name} with\n${ColorCodes.light_red}/scriptEvent ${this.namespace}:stop`);
+		world.sendMessage(`${ColorCodes.info}stop ${this.constructor.name} with\n${ColorCodes.material_redstone}/scriptEvent ${this.namespace}:stop`);
 		world.sendMessage(`${ColorCodes.info}toggle debug ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:debug`);
 	}
 	
