@@ -41,6 +41,61 @@ export function debugPrefix() {
 }
 
 /**
+ * get info about an object or instance
+ * @param {Object} obj the object to inspect
+ * @param {Object} opts - keyword option arguments
+ * @param {boolean} opts.function=true to include functions in the output array
+ * @param {boolean} opts.constructor=false to include constructor in the output array 
+ * @param {boolean} opts.property=true to include properties in the output array
+ * @param {boolean} opts.override=true to include override information (array of object names that is overridden from) in the output array 
+ * @param {boolean} opts.recursive=true to include parent object Metadata in the output array
+ * @returns {Array<{type:string, name:string, parent:string, overrides?:string[]}>} array of Metadata info on the given object, filtered by selected options
+ */
+export function getObjMetadata (obj, opts = {
+	'function': true,
+	'constructor': false,
+	'property':true,
+	'override': false,
+	'recursive': true,
+}) {
+	let props = [];
+	let seen = new Set();
+	do {
+		const l = Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj).map(s => s.toString())).sort()
+		.forEach((p, i, arr) => {
+			if (seen.has(p)) {
+				if (!opts.override) { return; }
+				for(const q of props) {
+					if (q.name == p) {
+						if (!q.overrides) {
+							q.overrides = [];
+						}
+						q.overrides.push(obj.constructor.name ?? 'unknown');
+						break;
+					}
+				}
+			} else {
+				const e = {
+					parent: obj.constructor.name,
+					name: p,
+					// overrides:[],
+					type: typeof obj[p] === 'function' ? 'function' : (p == 'constructor' ? p : 'property'),
+				};
+				if (opts[e.type]) {
+					props.push(e);
+				}
+				seen.add(p)
+			}
+		});
+	} while (
+		(obj = Object.getPrototypeOf(obj)) &&   //walk-up the prototype chain
+		Object.getPrototypeOf(obj)              //not the the Object prototype methods (hasOwnProperty, etc...)
+		&& opts.recursive
+		);
+		
+		return props;
+}
+/**
 * mconsole is a mimic of js console, but also can toggle printing to mc ""console""
 * @property {bool} enabled - if printing to the additional mc console is enabled.
 * @property {function} logger - the function to call that is the additional mc console
