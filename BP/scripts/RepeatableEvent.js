@@ -17,10 +17,11 @@ export /* abstract */ class RepeatableEvent {
 	state = {};
 	jobId;
 	commandMapping = {};
+	isRegistered = false;
 	constructor() {
-		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} );
-		system.afterEvents.scriptEventReceive.subscribe(this.onscriptEventReceive);
+		this.isRegistered = false;
 	}
+	
 	onScriptEventReceive(event) {
 		let id = event.id?.toString()?.toLowerCase().replace(this.namespace+":","");
 		if (id in this.commandMapping) {
@@ -35,6 +36,7 @@ export /* abstract */ class RepeatableEvent {
 			console.log(`${ColorCodes.info}spawned job: ${ColorCodes.blue}${event.id}`);
 		}
 	}
+
 	// /**
 	// * Called when the event starts.
 	// * Default: does nothing.
@@ -102,4 +104,11 @@ export /* abstract */ class RepeatableEvent {
 		world.sendMessage(`${ColorCodes.warn}Raised the ${this.namespace} stop flag!`);
 	}
 	
+	register() {
+		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} );
+		if (!this.isRegistered) {
+			system.afterEvents.scriptEventReceive.subscribe(this.onscriptEventReceive);
+			this.isRegistered = true;
+		}
+	}
 }
