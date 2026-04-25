@@ -1,7 +1,5 @@
 import { world, system } from "@minecraft/server";
 import { ColorCodes } from "./ColorCodes.js";
-
-const DEFAULT_DEBUG_MODE = true;
 /**
 * @param {any} node a value to be stringified and then formatted with colors.
 * @retueh {string}
@@ -95,6 +93,12 @@ export function getObjMetadata (obj, opts = {
 		
 		return props;
 }
+
+/* static way to store debug mode */
+class _DEBUG {
+	static enabled = true;
+}
+
 /**
 * mconsole is a mimic of js console, but also can toggle printing to mc ""console""
 * @property {bool} enabled - if printing to the additional mc console is enabled.
@@ -104,19 +108,19 @@ const mconsole = {
 	/** @property {bool} _isEnabled - internal state to do printing to additional mc console or not
 	* @type {bool}
 	*/
-	_isEnabled: DEFAULT_DEBUG_MODE,
+	_isEnabled: _DEBUG.enabled,
 	
 	/** @function toggle - changes the enabled state
 	* @param {bool?} value - if provided, will set an explicit value, otherwise will toggle the mode
 	*/
 	toggle(value) {
-		this._isEnabled = value ?? !this._isEnabled;
+		_DEBUG.enabled = value ?? !_DEBUG.enabled;
 	},
 	
 	/** @function disable - disable logging to additional mc console */
-	disable() { this._isEnabled = false; },
+	disable() { _DEBUG.enabled = false; },
 	/** @function enable - enable logging to additional mc console */
-	enable() { this._isEnabled = true; },
+	enable() { _DEBUG.enabled = true; },
 	/** @type {bool} - dont let users write the `enabled` key. */
 	set enabled(value) {
 		const e = new TypeError("Cannot set enabled. Use toggle(value) instead!");
@@ -125,7 +129,7 @@ const mconsole = {
 	},
 	/** @type {bool} - read enabled state */
 	get enabled() {
-		return this._isEnabled;
+		return _DEBUG.enabled;
 	},
 	
 	/** @property {function} _logger - the function that is called as the additional mc console.
@@ -160,7 +164,7 @@ const mconsole = {
 	},
 };
 
-// dynamically duplicate console
+// dynamically mock console
 for (const key of Object.getOwnPropertyNames(console)) {
 	if (typeof console[key] !== "function") {
 		// @todo any reason to store non funcs?
