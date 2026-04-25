@@ -6,6 +6,8 @@ export function createMockMinecraft() {
 	const timeouts = [];
 	
 	const system = {
+		scriptVersion: "mock",
+		
 		get currentTick() {
 			return currentTick;
 		},
