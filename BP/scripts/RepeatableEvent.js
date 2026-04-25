@@ -16,6 +16,7 @@ export /* abstract */ class RepeatableEvent {
 	step = 0;
 	state = {};
 	jobId;
+	cancelRequested = false;
 	commandMapping = {};
 	isRegistered = false;
 	constructor() {
@@ -27,7 +28,7 @@ export /* abstract */ class RepeatableEvent {
 		if (id in this.commandMapping) {
 			console.log(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`);
 			try {
-				this[commandMapping[id]](event);
+				this[this.commandMapping[id]](event);
 			} catch (e) {
 				console.log(`${ColorCodes.error}Error in: ${event.id} (${this.constructor.name}.${id}) ${ColorCodes.dark_purple}[${system.scriptVersion}]`);
 				console.log(`${ColorCodes.error}${e}`);
