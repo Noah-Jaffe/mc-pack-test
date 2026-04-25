@@ -7,7 +7,7 @@ import { mconsole as console } from "./debug.js";
 import { AutoChunkGenerator } from "./AutoChunkLoaderEvent.js"
 
 const MY_PLUGINS = [
-	
+	AutoChunkGenerator
 	// Add your custom script events above here as instances.
 ];
 
