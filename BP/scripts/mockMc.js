@@ -42,6 +42,9 @@ export function createMockMinecraft() {
 	};
 	
 	const world = {
+		getDimension() {
+			return "overworld";
+		}
 		sendMessage(msg) {
 			const stack = new Error("just for stack trace");
 			msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
