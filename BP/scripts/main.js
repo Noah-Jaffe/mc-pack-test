@@ -12,17 +12,17 @@ const MY_PLUGINS = [
 ];
 
 // on loading the script, call the events "register" function which is responsible for subscribing to the appropriate event
-for (const event of MY_PLUGINS) {
+for (let i = 0; i < MY_PLUGINS.length; ++i) {
 	try {
-		let e;
-		if (typeof event == "function") {
+		let e = MY_PLUGINS[i];
+		if (typeof e == "function") {
 			// MY_PLUGINS entry is a class type 
 			e = new event();
 		} else {
-			// MY_PLUGINS entry is an instance
-			e = event;
+			// MY_PLUGINS entry is an instance?
 		}
 		e.register();
+		MY_PLUGINS[i] = e;
 	} catch (err) {
 		console.log(`${ColorCodes.error}Error registering or spawning event ${event.constructor.name}: ${err.name}`);
 		console.error(err);
@@ -30,7 +30,6 @@ for (const event of MY_PLUGINS) {
 }
 
 system.runTimeout(() => {
-	world.sendMessage(`${ColorCodes.info}start ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.green}/scriptEvent ${SCRIPT_STATE.namespace}:start`);
-	world.sendMessage(`${ColorCodes.info}stop ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.light_red}/scriptEvent ${SCRIPT_STATE.namespace}:stop`);
-	world.sendMessage(`${ColorCodes.info}toggle debug ${SCRIPT_STATE?.constructor?.name} with\n${ColorCodes.green}/scriptEvent ${SCRIPT_STATE.namespace}:debug`);
+	world.sendMessage("loaded my plugins!")
+	console.log(`Loaded ${MY_PLUGINS.length} plugins`);
 }, 20*5);
