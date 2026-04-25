@@ -71,7 +71,7 @@ export /* abstract */ class RepeatableEvent {
 		console.log(`repeatable: step =${this.step}; id=${this.jobId}`);
 		if (this.cancelRequested) {
 			// abort loop enacted
-			world.sendMessage(`${ColorCodes.warn}Active ${this.namespace} (${this.jobId}) aborted!\n${ColorCodes.warn}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+			world.sendMessage(`${ColorCodes.warn}Active ${this.namespace} (${this.jobId}) aborted!`);//\n${ColorCodes.warn}To start again, run:\n${ColorCodes.light_purple}/scriptEvent ${}start`);
 			this.onStop();
 			return;
 		}
@@ -98,7 +98,7 @@ export /* abstract */ class RepeatableEvent {
 	}
 	stopLoop(event) {
 		if (this.jobId == null){
-			world.sendMessage(`${ColorCodes.warn}No active ${this.namespace} running!\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
+			world.sendMessage(`${ColorCodes.warn}No active ${this.namespace} running!`);//\nTo start one, run:\n${ColorCodes.light_purple}/scriptEvent ${startJobId}`);
 			return;
 		}
 		this.cancelRequested = true;
