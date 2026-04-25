@@ -108,7 +108,7 @@ export /* abstract */ class RepeatableEvent {
 	register() {
 		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} );
 		if (!this.isRegistered) {
-			system.afterEvents.scriptEventReceive.subscribe(this.onscriptEventReceive);
+			system.afterEvents.scriptEventReceive.subscribe(this.onScriptEventReceive);
 			this.isRegistered = true;
 		}
 	}
