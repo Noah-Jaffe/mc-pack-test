@@ -24,7 +24,7 @@
 		"type": "script",
 		"language": "javascript",
 		"uuid": "8dfac781-19f9-4b57-9dd4-f256b7661002",
-		"entry": "scripts/EventRepeater.js",
+		"entry": "scripts/main.js",
 		"version": [
 			1,
 			0,
