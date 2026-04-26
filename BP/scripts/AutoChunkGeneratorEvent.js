@@ -54,7 +54,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	};
 	
 	/** command mapping keys are for /scriptEvent {this.namespace}:<key> -> calls this.<value>(event) */
-	commandMapping: {
+	commandMapping = {
 		"start": "onStart",
 		"stop": "onStop",
 		"debug": "onDebug",
