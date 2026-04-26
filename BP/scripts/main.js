@@ -11,6 +11,8 @@ const MY_PLUGINS = [
 ];
 
 // on loading the script, call the events "register" function which is responsible for subscribing to the appropriate event
+system.runTimeout(() => {
+	world.sendMessage("loading...");
 let loaded = 0;
 for (let i = 0; i < MY_PLUGINS.length; ++i) {
 	let event = MY_PLUGINS[i];
@@ -38,4 +40,5 @@ for (let i = 0; i < MY_PLUGINS.length; ++i) {
 system.runTimeout(() => {
 	world.sendMessage("loaded my plugins!")
 	console.log(`Loaded ${loaded}/${MY_PLUGINS.length} plugins`);
+}, 20*5);
 }, 20*5);
