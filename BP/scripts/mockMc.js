@@ -1,4 +1,3 @@
-
 export function createMockMinecraft() {
 	let currentTick = 0;
 	let nextJobId = 1;
@@ -44,12 +43,12 @@ export function createMockMinecraft() {
 	const world = {
 		getDimension() {
 			return "overworld";
-		}
+		},
 		sendMessage(msg) {
 			const stack = new Error("just for stack trace");
 			msg = msg.replaceAll(new RegExp(Object.values(ColorCodes).join("|"), "gmi"), "")
 			console.trace(`[MSG @${currentTick}]`, msg, stack);
-		}
+		},
 	};
 	
 	function tick(n = 1) {
