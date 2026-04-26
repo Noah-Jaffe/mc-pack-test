@@ -9,7 +9,7 @@ import { ColorCodes } from "./ColorCodes.js"
 * 2. Command is executed: `/scriptEvent <namespace>:start`, then the RepeatableEvent.onStart is called followed by the first RepeatableEvent.onTick
 * 3. RepeatableEvent.onTick is called every RepeatableEvent.interval ticks.
 * 4. Command is executed: `/scriptEvent <namespace>:stop`, then the RepeatableEvent.onStop is called. the following RepeatableEvent.onTick is expected to check 
-export /*abstract*/ 
+*/
 export /* abstract */ class RepeatableEvent {
 	namespace = null;
 	interval = 20;
