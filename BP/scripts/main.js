@@ -13,16 +13,16 @@ const MY_PLUGINS = [
 
 // on loading the script, call the events "register" function which is responsible for subscribing to the appropriate event
 for (let i = 0; i < MY_PLUGINS.length; ++i) {
+	let event = MY_PLUGINS[i];
 	try {
-		let e = MY_PLUGINS[i];
-		if (typeof e == "function") {
+		if (typeof event == "function") {
 			// MY_PLUGINS entry is a class type 
-			e = new event();
+			event = new event();
 		} else {
 			// MY_PLUGINS entry is an instance?
 		}
-		e.register();
-		MY_PLUGINS[i] = e;
+		event.register();
+		MY_PLUGINS[i] = event;
 	} catch (err) {
 		console.log(`${ColorCodes.error}Error registering or spawning event ${event.constructor.name}: ${err.name}`);
 		console.error(err);
