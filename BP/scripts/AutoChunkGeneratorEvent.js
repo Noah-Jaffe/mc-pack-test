@@ -53,12 +53,13 @@ export class AutoChunkGenerator extends RepeatableEvent {
 		dimension: null,
 	};
 	
-	/** command mapping keys are for /scriptEvent {this.namespace}:<key> -> calls this.<value>(event)
+	/** command mapping keys are for /scriptEvent {this.namespace}:<key> -> calls this.<value>(event) */
 	commandMapping: {
-	"start": "onStart",
-	"stop": "onStop",
-	"debug": "onDebug",
-	"dbg": "onDebug",
+		"start": "onStart",
+		"stop": "onStop",
+		"debug": "onDebug",
+		"dbg": "onDebug",
+		"test": "test",
 	};
 	
 	/**
@@ -156,5 +157,9 @@ export class AutoChunkGenerator extends RepeatableEvent {
 			world.sendMessage(`${ColorCodes.blue}console debug mode set from ${curr ? ColorCodes.green : ColorCodes.red}${!!curr}${ColorCodes.blue} to ${console.enabled ? ColorCodes.green : ColorCodes.red}${!!console.enabled}`);
 			
 		}
+	}
+	
+	test(event=null) {
+		world.sendMessage("test");
 	}
 }
