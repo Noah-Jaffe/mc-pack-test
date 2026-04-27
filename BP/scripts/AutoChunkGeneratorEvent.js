@@ -71,7 +71,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	constructor({
 		namespace=null,
 		interval=20,
-		dimension="overworld",
+		dimension=null,
 		chunkLoader=null,
 		root={ x: null, z: null },
 		x=null,
