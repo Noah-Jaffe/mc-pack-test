@@ -28,9 +28,9 @@ for (let i = 0; i < MY_PLUGINS.length; ++i) {
 		}
 		console.log(`[${i}/${MY_PLUGINS.length}] calling register`)
 		event.register();
+		loaded++;
 		console.log(`[${i}/${MY_PLUGINS.length}] custom plug-in registered: ${event.constructor.name}`)
 		MY_PLUGINS[i] = event;
-		loaded++;
 	} catch (err) {
 		system.runTimeout(() => {
 		console.log(`${ColorCodes.error}Error initalizing or registering event ${event.constructor.name}: ${err.name}`);
