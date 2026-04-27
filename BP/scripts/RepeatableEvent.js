@@ -24,6 +24,7 @@ export /* abstract */ class RepeatableEvent {
 	}
 	
 	onScriptEventReceive(event) {
+		console.log(`${this?.constructor?.name}: checking if owner of: ${event.id}`);
 		let id = event.id?.toString()?.toLowerCase().replace(this.namespace+":","");
 		if (id in this.commandMapping) {
 			console.log(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`);
@@ -108,7 +109,7 @@ export /* abstract */ class RepeatableEvent {
 	register() {
 		this.commandMapping = Object.entries(this.commandMapping ?? {}).reduce((acc, [k,v]) => { acc[k?.toString()?.toLowerCase().replace(this.namespace+":","")] = v; return acc; }, {} );
 		if (!this.isRegistered) {
-			system.afterEvents.scriptEventReceive.subscribe(this.onScriptEventReceive);
+			system.afterEvents.scriptEventReceive.subscribe(this.onScriptEventReceive.bind(this));
 			this.isRegistered = true;
 		}
 	}
