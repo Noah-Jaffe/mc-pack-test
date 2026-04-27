@@ -137,7 +137,8 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	* Outputs the command required to start this event. 
 	* @todo: Also essentially a `/scriptEvent {@link namespace}:help`command?
 	*/
-	onRegister(){
+	register(){
+		super.register();
 		world.sendMessage(`${ColorCodes.info}start ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:start`);
 		world.sendMessage(`${ColorCodes.info}stop ${this.constructor.name} with\n${ColorCodes.material_redstone}/scriptEvent ${this.namespace}:stop`);
 		world.sendMessage(`${ColorCodes.info}toggle debug ${this.constructor.name} with\n${ColorCodes.green}/scriptEvent ${this.namespace}:debug`);
