@@ -25,7 +25,7 @@ export /* abstract */ class RepeatableEvent {
 	
 	onScriptEventReceive(event) {
 		console.log(`${this?.constructor?.name}: checking if owner of: ${event.id}`);
-		let id = event.id?.toString()?.toLowerCase().replace(this.namespace+":","");
+		let id = event.id?.toString()?.toLowerCase().replace(this.namespace?.toLowerCase()+":","");
 		if (id in this.commandMapping) {
 			console.log(`${ColorCodes.info}Attempting to start: ${ColorCodes.green}${event.id}`);
 			try {
