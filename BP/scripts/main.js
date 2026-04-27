@@ -19,12 +19,14 @@ for (let i = 0; i < MY_PLUGINS.length; ++i) {
 	try {
 		if (typeof event == "function") {
 			// MY_PLUGINS entry is a class type 
+			console.log(`[${i}/${MY_PLUGINS.length}] attempting to initialize ${event.name}`)
 			event = new event();
 			console.log(`[${i}/${MY_PLUGINS.length}] initialized custom plug-in instance: ${event.constructor.name}`)
 		} else {
 			// MY_PLUGINS entry is an instance?
-			console.log(`[${i}/${MY_PLUGINS.length}] custom plug-in already initalized: ${event.constructor.name}`)
+			console.log(`[${i}/${MY_PLUGINS.length}] custom plug-in already initalized: ${event?.constructor?.name}`)
 		}
+		console.log(`[${i}/${MY_PLUGINS.length}] calling register`)
 		event.register();
 		console.log(`[${i}/${MY_PLUGINS.length}] custom plug-in registered: ${event.constructor.name}`)
 		MY_PLUGINS[i] = event;
