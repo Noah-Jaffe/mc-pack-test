@@ -8,12 +8,22 @@ import { chunkSize, roundForChunkEdge, getChunkAtStep } from "./ChunkMath.js";
 
 class EVT {
 	// script instance generic
-	namespace = `chunkGen`,
-	interval = 5,
-	jobId= null,
-	id= null,
-	step= null,
-	debug= true,
+	constructor(){
+	this.namespace = `chunkGen`;
+	this.interval = 5;
+	this.jobId= null;
+	this.id= null;
+	this.step= null;
+	this.debug= true;
+	this.state= {
+		// script instance specific
+		root: null,
+		lastCoords: null,
+		lastTick: null,
+		chunkLoader: null,
+		dimension: null,
+	};
+	}
 	/** run once, before the first onTick */
 	onStart(event){
 		// @todo refactor to onStart
@@ -30,14 +40,14 @@ class EVT {
 			// persistent will keep created chunks loaded across server restarts, until unloaded manually
 			this.state.chunkLoader = new ChunkLoader(this.state.dimension, { persistent: true, logs: true });
 		}
-	},
+	}
 	/** onStop is run as the final action, not necessarily when the stop command is fired/requested. */ 
 	onStop(){
 		world.sendMessage(`${ColorCodes.info}Last step:${ColorCodes.green}${this.step}\n${ColorCodes.info}Last coords:${ColorCodes.green}${JSON.stringify(this.state.lastCoords)}\n${ColorCodes.info}Last exe tick:${ColorCodes.green}${this.state.lastTick}`);
 		this.cancelRequested = null;
 		this.jobId = null;
 		this.state.chunkLoader = null;
-	},
+	}
 	/** run at each tick interval */
 	onTick(){
 		const coords = getChunkAtStep(this?.state?.root?.x ?? 0, this?.state?.root?.z ?? 0, this.step);
@@ -48,19 +58,10 @@ class EVT {
 		}))();
 		this.state.lastTick = system.currentTick;
 		this.state.lastCoords = coords;
-	},
+	}
 	/** run once, before onStart */
 	onRegister(){
 		world.sendMessage(`${ColorCodes.info}start with\n${ColorCodes.green}/scriptEvent ${startJobId}`);
-	},
-	
-	state= {
-		// script instance specific
-		root: null,
-		lastCoords: null,
-		lastTick: null,
-		chunkLoader: null,
-		dimension: null,
 	}
 };
 const SCRIPT_STATE = new EVT();
