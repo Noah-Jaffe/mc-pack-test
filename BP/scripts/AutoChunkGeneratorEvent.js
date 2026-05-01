@@ -4,6 +4,7 @@ import { ColorCodes } from "./ColorCodes.js";
 import { ChunkLoader } from "./ChunkLoader.js";
 import { mconsole as console } from "./debug.js";
 import { getChunkAtStep } from "./ChunkMath.js";
+import { parseScriptEventMessageForArgs } from "./ArgParser.js";
 import { RepeatableEvent } from "./RepeatableEvent.js";
 
 /**
@@ -100,6 +101,8 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	*/
 	onStart(event){
 		// @todo read event.message for the custom args
+		const customArgs = parseScriptEventMessageForArgs(event?.message);
+		console.log(JSON.stringify(customArgs));
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`);
 		} else {
