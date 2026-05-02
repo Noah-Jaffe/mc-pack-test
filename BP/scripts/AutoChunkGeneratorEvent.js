@@ -6,6 +6,7 @@ import { mconsole as console } from "./debug.js";
 import { getChunkAtStep } from "./ChunkMath.js";
 import { parseScriptEventMessageForArgs } from "./ArgParser.js";
 import { RepeatableEvent } from "./RepeatableEvent.js";
+import { flatten } from "./Utils.js";
 
 /**
 * @typedef {Object} RootPosition
@@ -102,7 +103,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	onStart(event){
 		// @todo read event.message for the custom args
 		const customArgs = parseScriptEventMessageForArgs(event?.message);
-		console.log(JSON.stringify(customArgs));
+		this.updateResumeState(customArgs);
 		if (this.state.root != null && this.step> 10) {
 			world.sendMessage(`${ColorCodes.green}RESUMING FROM PREVIOUS STATE ${ColorCodes.info}${JSON.stringify(this.state.root)} #${this.step}`);
 		} else {
@@ -165,5 +166,83 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	
 	test(event=null) {
 		world.sendMessage("test");
+	}
+	
+	updateResumeState(args) {
+		const flatArgs = flatten(args,".");
+		const resumeParser = [
+			{reg:/^(i|interval)/gmi, validTypes: ["number"], updator: (val) => this.interval = val }, 
+			{reg:/^(n|s|step)/gmi, validTypes: ["number"], updator: (val) => this.step = val }, 
+			{reg:/^(x|root.x)/gmi, validTypes: ["number"], updator: (val) => this.state.root.x = val }, 
+			{reg:/^(z|root.z)/gmi, validTypes: ["number"], updator: (val) => this.state.root.z = val }, 
+			{reg:/^(last.x|prev.x)/gmi, validTypes: ["number"], updator: (val) => this.state.lastCoords.x = val }, 
+			{reg:/^(last.z|prev.z)/gmi, validTypes: ["number"], updator: (val) => this.state.lastCoords.z = val }, 
+			];
+			resumeParser.forEach(e=> {
+				// if we were given an input key that matches the given reg, and it is of valid type, then apply the update.
+				let val=findByKeys(flatArgs, e.reg);
+				if (e.validTypes.includes(typeof val)) {
+					e.updator(val);
+					console.log(`Resume state for '${((/this\.([^ =:;]+)/gmi).exec(e.updator.toString())??['','value'])[1]}' set to ${JSON.stringify(val)}`);
+				} else if (val != undefined) {
+					console.log(`Unable to update '${((/this\.([^ =:;]+)/gmi).exec(e.updator.toString())??['','value'])[1]}', expected one of types: ${JSON.stringify(e.validValues)} but got ${JSON.stringify(val)}`);
+				}
+				
+			});
+			
+			
+			/*
+			let val;
+			
+			if ((val=findByKeys(flatArgs, /^(i|interval)/gmi)) != undefined) {
+			this.interval = val;
+			console.log(`Resume state updated 'interval' to ${JSON.stringify(val)}!`);
+			}
+			if ((val=findByKeys(flatArgs, /^(n|s|step)/gmi)) != undefined) {
+			this.step = val;
+			console.log(`Resume state updated 'step' to ${JSON.stringify(val)}!`);
+			}
+			if ((val=findByKeys(flatArgs, /^(x|root.x)/gmi)) != undefined) {
+			if (isNaN(Number(val))) {
+			console.log(`Unable to update 'state.root.x', expected number instead of ${JSON.stringify(val)}`)
+			} else {
+			this.state.root.x = val;
+			console.log(`Resume state updated 'state.root.x' to ${JSON.stringify(val)}!`);
+			}
+			}
+			if ((val=findByKeys(flatArgs, /^(z|root.z)/gmi)) != undefined) {
+			if (isNaN(Number(val))) {
+			console.log(`Unable to update 'state.root.z', expected number instead of ${JSON.stringify(val)}`)
+			} else {
+			this.state.root.z = val;
+			console.log(`Resume state updated 'state.root.z' to ${JSON.stringify(val)}!`);
+			}
+			}
+			if ((val=findByKeys(flatArgs, /^(last.x|prev.x)/gmi)) != undefined) {
+			if (isNaN(Number(val))) {
+			console.log(`Unable to update 'state.lastCoords.x', expected number instead of ${JSON.stringify(val)}`)
+			} else {
+			this.state.lastCoords.x = val;
+			console.log(`Resume state updated 'state.lastCoords.x' to ${JSON.stringify(val)}!`);
+			}
+			}
+			if ((val=findByKeys(flatArgs, /^(last.z|prev.z)/gmi)) != undefined) {
+			if (isNaN(Number(val))) {
+			console.log(`Unable to update 'state.lastCoords.z', expected number instead of ${JSON.stringify(val)}`)
+			} else {
+			this.state.lastCoords.z = val;
+			console.log(`Resume state updated 'state.lastCoords.z' to ${JSON.stringify(val)}!`);
+			}
+			
+			}
+			*/
+			/* @todo: resume from:
+			i|interval this.interval
+			n|s|step this.step
+			x|root.x|root_x this.state.root.x
+			z|root.z|root_z this.state.root.z
+			last.x|prev.x|last_x|prev_x this.state.lastCoords.x
+			last.z|prev.z|last_z|prev_z this.state.lastCoords.z
+			*/
 	}
 }
