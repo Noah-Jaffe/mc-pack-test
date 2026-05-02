@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 repoPath="./"
-#git -C $repoPath pull || echo "not git repo"
+git -C $repoPath pull || echo "not git repo"
 # -----------------------------
 # Update version in manifest
 # -----------------------------
