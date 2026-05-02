@@ -44,7 +44,7 @@ done
 
  
 # Validate age is a number
-if [ $skipPull -eq 0]; then
+if [ $skipPull -eq 0 ]; then
   git -C $repoPath pull || echo "not git repo"
 fi
 # -----------------------------
