@@ -102,6 +102,6 @@ git -C $repoPath add "$repoPath$manifestPath"
 git -C $repoPath add "$mcpack"
 newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
 git tag $newV
-git -C $repoPath commit "version bump on build: $newV"
+git -C $repoPath commit -m "version bump on build: $newV"
 git push --tags
 echo "Done. See $mcpack"
