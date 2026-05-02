@@ -10,9 +10,10 @@ skipTag=0
 usage() {
   echo "Usage: $0 [--no-pull] [--no-bump] [--no-push]"
   echo "Options:"
-  echo "  --no-pull   skips pull action. will build from current local files only."
-  echo "  --no-tag    skips adding a new tag."
-  echo "  --no-push   skips push action. will not push updated build and version to remote."
+  echo "  --no-pull    skips pull action. will build from current local files only."
+  echo "  --no-tag     skips adding a new tag."
+  echo "  --no-push    skips push action. will not push updated build and version to remote."
+  echo "  -h | --help  shows this helper message"
   exit 1
 }
  
