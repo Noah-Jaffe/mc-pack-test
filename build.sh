@@ -1,7 +1,52 @@
 #!/usr/bin/env bash
 set -e
 repoPath="./"
-git -C $repoPath pull || echo "not git repo"
+skipPull=0
+skipPush=0
+skipTag=0
+
+ 
+# Usage help function
+usage() {
+  echo "Usage: $0 [--no-pull] [--no-bump] [--no-push]"
+  echo "Options:"
+  echo "  --no-pull   skips pull action. will build from current local files only."
+  echo "  --no-tag    skips adding a new tag."
+  echo "  --no-push   skips push action. will not push updated build and version to remote."
+  exit 1
+}
+ 
+# Parse flags with getopts
+# Use getopt to parse flags (short: n:a:c:vh; long: name:,age:,city:,verbose,help)
+# --options: short flags; --longoptions: long flags; --: separate flags from positional args
+PARSED_ARGS=$(getopt --options h --longoptions noPull:,noTag:,noPush:,help --name "$0" -- "$@")
+if [ $? -ne 0 ]; then
+  # getopt failed (invalid flags)
+  usage
+fi
+ 
+# Set positional parameters to parsed arguments
+eval set -- "$PARSED_ARGS"
+ 
+# Parse the flags
+while true; do
+  case "$1" in
+    --noPull) skipPull=1; shift ;;  # Capture arg with no param
+    --noTag)  skipTag=1; shift ;;
+    --noPush) skipPush=1; shift ;;
+    -h|--help) usage ;;               # Show help
+    --) shift; break ;;               # End of flags (remaining are positional args)
+    *) echo "Error: Unexpected flag $1" >&2; usage ;;
+  esac
+done
+ 
+# Validate required flags
+
+ 
+# Validate age is a number
+if [ $skipPull -eq 0]; then
+  git -C $repoPath pull || echo "not git repo"
+fi
 # -----------------------------
 # Update version in manifest
 # -----------------------------
@@ -97,11 +142,14 @@ echo "restoring files"
 #git -C $repoPath restore $langFile
 mv "$langbackup" "$repoPath$langFile"
 
-# do we also commit here?
-git -C $repoPath add "$repoPath$manifestPath"
-git -C $repoPath add "$mcpack"
-newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
-git tag $newV
-git -C $repoPath commit -m "version bump on build: $newV"
-git push --tags
+if [ $skipPush -eq 0 ]; then
+  git -C $repoPath add "$repoPath$manifestPath"
+  git -C $repoPath add "$mcpack"
+  newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
+  if [ $skipTag -eq 0 ]; then
+    git tag $newV
+  fi
+  git -C $repoPath commit -m "version bump on build: $newV"
+  #git push --tags
+fi
 echo "Done. See $mcpack"
