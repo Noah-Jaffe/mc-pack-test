@@ -19,7 +19,7 @@ usage() {
 # Parse flags with getopts
 # Use getopt to parse flags (short: n:a:c:vh; long: name:,age:,city:,verbose,help)
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
-PARSED_ARGS=$(getopt --options h --longoptions no-pull:,no-tag:,no-push:,help --name "$0" -- "$@")
+PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help --name "$0" -- "$@")
 if [ $? -ne 0 ]; then
   # getopt failed (invalid flags)
   usage
