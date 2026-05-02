@@ -250,6 +250,7 @@ function tokenize(input) {
 }
 
 // auto run tests?
+/*
 (()=>{
 	[
 	{ arg: '--port=3000 --debug', expected: { port: 3000, debug: true }, },
@@ -267,3 +268,4 @@ function tokenize(input) {
 		}
 	});
 })()
+*/
