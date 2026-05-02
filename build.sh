@@ -16,7 +16,42 @@ usage() {
   echo "  -h | --help  shows this helper message"
   exit 1
 }
- 
+
+confirm() {
+  local prompt="$1"
+  while true; do
+    read -r -p "$prompt [y/N]: " reply
+    reply="${reply,,}"    # tolower
+    case "$reply" in
+      y|yes) return 0 ;;
+      n|no|"" ) return 1 ;;
+      *) echo "Please answer y or n." ;;
+    esac
+  done
+}
+sync_git_tags(){
+	
+	local localTags=$(git -C $repoPath tag)
+	local remoteTags=$(printf '%s\n' "$(git -C $repoPath ls-remote --tags)" | awk '{print $2}' | sed 's#refs/tags/##')
+	local localNotRemote=$(comm -23  <(printf '%s\n' "$localTags" | sort) <(printf '%s\n' "$remoteTags" | sort) || true)
+	local remoteNotLocal=$(comm -23  <(printf '%s\n' "$remoteTags" | sort) <(printf '%s\n' "$localTags" | sort) || true)
+	local message="Sync tags?"
+	if [ ! -z "$localNotRemote" ]; then
+    message="$message
+    Tags to be deleted from local work (local, not remote)
+      $localNotRemote"
+  fi
+  if [ ! -z "$localNotRemote" ]; then
+    message="$message
+    Tags to be added (remote, not local)
+      $remoteNotLocal"
+  fi
+	if confirm $message; then
+    git -C $repoPath fetch
+    git -C $repoPath tag --delete $localNotRemote
+  fi
+}
+
 # Parse flags with getopts
 # Use getopt to parse flags (short: n:a:c:vh; long: name:,age:,city:,verbose,help)
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
@@ -151,6 +186,7 @@ if [ $skipPush -eq 0 ]; then
     git tag $newV
   fi
   git -C $repoPath commit -m "version bump on build: $newV"
-  #git push --tags
+  git push --tags
 fi
 echo "Done. See $mcpack"
+
