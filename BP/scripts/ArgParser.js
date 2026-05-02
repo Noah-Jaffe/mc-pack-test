@@ -16,7 +16,7 @@ import { mconsole as console } from "./debug.js";
 * - Returns primitive if message is a single value
 * - Returns empty object if nothing parsable
 */
-function parseScriptEventMessageForArgs(rawMessage) {
+export function parseScriptEventMessageForArgs(rawMessage) {
 	if (typeof rawMessage !== "string" || rawMessage.trim() === "") {
 		return {};
 	}
