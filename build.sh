@@ -35,7 +35,7 @@ sync_git_tags(){
 	local remoteTags=$(printf '%s\n' "$(git -C $repoPath ls-remote --tags)" | awk '{print $2}' | sed 's#refs/tags/##')
 	local localNotRemote=$(comm -23  <(printf '%s\n' "$localTags" | sort) <(printf '%s\n' "$remoteTags" | sort) || true)
 	local remoteNotLocal=$(comm -23  <(printf '%s\n' "$remoteTags" | sort) <(printf '%s\n' "$localTags" | sort) || true)
-	local message="Sync tags?"
+	local message=""
 	if [ ! -z "$localNotRemote" ]; then
     message="$message
     Tags to be deleted from local work (local, not remote)
@@ -46,9 +46,11 @@ sync_git_tags(){
     Tags to be added (remote, not local)
       $remoteNotLocal"
   fi
-	if confirm $message; then
-    git -C $repoPath fetch
-    git -C $repoPath tag --delete $localNotRemote
+  if [ ! -z "$message" ]; then 
+    if confirm $message; then
+      git -C $repoPath fetch
+      git -C $repoPath tag --delete $localNotRemote
+    fi
   fi
 }
 
