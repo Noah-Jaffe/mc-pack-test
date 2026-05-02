@@ -16,7 +16,6 @@ manifestPath="BP/manifest.json"
 incrementMinorVersion() {
   local filePath=$1;
   local varPath=$2;
-echo "$filepath $varPath";
   local preV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
   updated=$(jq "$varPath[2] += 1" $filePath)
   echo $updated > $filePath 
