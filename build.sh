@@ -31,9 +31,9 @@ eval set -- "$PARSED_ARGS"
 # Parse the flags
 while true; do
   case "$1" in
-    --noPull) skipPull=1; shift ;;  # Capture arg with no param
-    --noTag)  skipTag=1; shift ;;
-    --noPush) skipPush=1; shift ;;
+    --no-pull) skipPull=1; shift ;;  # Capture arg with no param
+    --no-tag)  skipTag=1; shift ;;
+    --no-push) skipPush=1; shift ;;
     -h|--help) usage ;;               # Show help
     --) shift; break ;;               # End of flags (remaining are positional args)
     *) echo "Error: Unexpected flag $1" >&2; usage ;;
