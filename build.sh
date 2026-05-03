@@ -78,6 +78,20 @@ sync_git_tags(){
   fi
 }
 
+# Increment minor version of a path inside a json file
+incrementMinorVersion() {
+  local filePath=$1;
+  local varPath=$2;
+  local preV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
+  echo "$(jq -r "$varPath[2] += 1" $filePath)" > $filePath
+  local newV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
+  preV=$(echo "$preV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
+  newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
+  echo "Updated version:
+  $filePath::$varPath
+    $preV -> $newV"
+}
+  
 # Parse flags with getopts
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
 PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help,path: --name "$0" -- "$@")
@@ -122,16 +136,7 @@ manifestPath="BP/manifest.json"
 #jq  ".header.version[2]+=1" > "$repoPath$manifestPath"
 #newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
 
-incrementMinorVersion() {
-  local filePath=$1;
-  local varPath=$2;
-  local preV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
-  updated=$(jq "$varPath[2] += 1" $filePath)
-  echo $updated > $filePath 
-  local newV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
-  echo "updated $filePath::$varPath from $preV to $newV"
-}
-  
+
 # --- Step 1: increment header.version[2] ---
 incrementMinorVersion "$manifestPath" ".header.version"
 
