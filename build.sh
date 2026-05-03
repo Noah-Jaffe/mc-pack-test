@@ -4,19 +4,20 @@ repoPath="./"
 skipPull=0
 skipPush=0
 skipTag=0
-
  
 # Usage help function
 usage() {
-  echo "Usage: $0 [--no-pull] [--no-bump] [--no-push]"
+  echo "Usage: $0 [--no-pull] [--no-bump] [--no-push] [--path='./']"
   echo "Options:"
-  echo "  --no-pull    skips pull action. will build from current local files only."
-  echo "  --no-tag     skips adding a new tag."
-  echo "  --no-push    skips push action. will not push updated build and version to remote."
-  echo "  -h | --help  shows this helper message"
+  echo "  --no-pull      skips pull action. will build from current local files only."
+  echo "  --no-tag       skips adding a new tag."
+  echo "  --no-push      skips push action. will not push updated build and version to remote."
+  echo "  --path <path>  provide a path to the src repo; defaults to './'"
+  echo "  -h | --help    shows this helper message"
   exit 1
 }
 
+# prompt user to confirm y/n 
 confirm() {
   local prompt="$1"
   while true; do
@@ -29,36 +30,58 @@ confirm() {
     esac
   done
 }
+
+# download remote tags, delete local tags not in remote
 sync_git_tags(){
-	
+	local push_local=0
+	local delete_local_not_remote=0
+	local pull_remote=1
+	while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --push-local|-l) push_local=1; shift ;;
+      --delete-local-only|-d) delete_local_not_remote=1; shift;;
+      --no-pull-remote|-r) pull_remote=0; shift;;
+      --) shift; break ;;
+      *) echo "Unknown option: $1" >&2; return 1 ;;
+    esac
+  done
+  if (( $push_local + $delete_local_not_remote == 2 )); then
+    echo "cannot choose -l|--push-local && -d|--delete-local-only are mutually exclusive, only one is allowed"
+    return 1
+  fi
 	local localTags=$(git -C $repoPath tag)
 	local remoteTags=$(printf '%s\n' "$(git -C $repoPath ls-remote --tags)" | awk '{print $2}' | sed 's#refs/tags/##')
 	local localNotRemote=$(comm -23  <(printf '%s\n' "$localTags" | sort) <(printf '%s\n' "$remoteTags" | sort) || true)
 	local remoteNotLocal=$(comm -23  <(printf '%s\n' "$remoteTags" | sort) <(printf '%s\n' "$localTags" | sort) || true)
 	local message=""
-	if [ ! -z "$localNotRemote" ]; then
+	if [[ ! -z "$localNotRemote" ]] && (( $push_local + $delete_local_not_remote > 0 )); then
     message="$message
-    Tags to be deleted from local work (local, not remote)
+    Tags to be $([ $push_local -eq 1 ] && echo "PUSHED" || $([ $delete_local_not_remote -eq 1 ] && echo "DELETED" || echo "IGNORED")) from local work
       $localNotRemote"
   fi
-  if [ ! -z "$localNotRemote" ]; then
+  if [[ ! -z "$remoteNotLocal" ]]; then
     message="$message
-    Tags to be added (remote, not local)
+    Tags to be $([[] $pull_remote -eq 1 ]] && echo "PULLED" || echo "IGNORED") from remote work
       $remoteNotLocal"
   fi
-  if [ ! -z "$message" ]; then 
+  if [[ ! -z "$message" ]]; then 
     if confirm $message; then
-      git -C $repoPath fetch
-      git -C $repoPath tag --delete $localNotRemote
+      if [[ $pull_remote -eq 1 ]]; then 
+        git -C $repoPath fetch
+      fi
+      if [[ $push_local -eq 1 ]]; then 
+        git -C $repoPath push --tags
+      elif [[ $delete_local_not_remote -eq 1 ]]; then
+        git -C $repoPath tag --delete $localNotRemote
+      fi
     fi
   fi
 }
 
 # Parse flags with getopts
-# Use getopt to parse flags (short: n:a:c:vh; long: name:,age:,city:,verbose,help)
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
-PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help --name "$0" -- "$@")
-if [ $? -ne 0 ]; then
+PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help,path: --name "$0" -- "$@")
+if [[ $? -ne 0 ]]; then
   # getopt failed (invalid flags)
   usage
 fi
@@ -69,20 +92,23 @@ eval set -- "$PARSED_ARGS"
 # Parse the flags
 while true; do
   case "$1" in
-    --no-pull) skipPull=1; shift ;;  # Capture arg with no param
-    --no-tag)  skipTag=1; shift ;;
-    --no-push) skipPush=1; shift ;;
-    -h|--help) usage ;;               # Show help
-    --) shift; break ;;               # End of flags (remaining are positional args)
+    --no-pull) skipPull=1; shift ;;  # Skip pull remote changes before upgrading version
+    --no-tag)  skipTag=1; shift ;; # Skip adding a new tag (requires to not skip push)
+    --no-push) skipPush=1; shift ;; # Skip pushing new build to remote
+    --path) repoPath=$2; shift 2;; # Capture arg with param: set the path to the root mcpack src directory
+    -h|--help) usage ;;               # Capture arg with no param: Show help & exit
+    --) shift; break ;;               # End of flags (remaining are positional args, and we ignore those for now)
     *) echo "Error: Unexpected flag $1" >&2; usage ;;
   esac
 done
  
-# Validate required flags
-
- 
-# Validate age is a number
-if [ $skipPull -eq 0 ]; then
+# Validate args here if needed
+if [[ ! -d $repoPath ]]; then 
+  echo "--path must resolve to a valid existing directory of a mcpack src directory!"
+  exit 1
+fi
+# Attempt to pull latest updates (if not skipped)
+if [[ $skipPull -eq 0 ]]; then
   git -C $repoPath pull || echo "not git repo"
 fi
 # -----------------------------
@@ -180,12 +206,13 @@ echo "restoring files"
 #git -C $repoPath restore $langFile
 mv "$langbackup" "$repoPath$langFile"
 
-if [ $skipPush -eq 0 ]; then
+if [[ $skipPush -eq 0 ]]; then
   git -C $repoPath add "$repoPath$manifestPath"
   git -C $repoPath add "$mcpack"
   newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
-  if [ $skipTag -eq 0 ]; then
+  if [[ $skipTag -eq 0 ]]; then
     git tag $newV
+    sync_git_tags --push-local --pull-remote
   fi
   git -C $repoPath commit -m "version bump on build: $newV"
   git -C $repoPath push --tags
