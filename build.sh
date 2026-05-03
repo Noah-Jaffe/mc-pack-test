@@ -65,7 +65,7 @@ sync_git_tags(){
       $remoteNotLocal"
   fi
   if [[ ! -z "$message" ]]; then 
-    if confirm $message; then
+    if confirm "$message"; then
       if [[ $pull_remote -eq 1 ]]; then 
         git -C $repoPath fetch
       fi
