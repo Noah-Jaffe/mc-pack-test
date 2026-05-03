@@ -21,7 +21,8 @@ usage() {
 confirm() {
   local prompt="$1"
   while true; do
-    read -r -p "$prompt [y/N]: " reply
+    read -r -p "$prompt 
+[y/N]: " reply
     reply="${reply,,}"    # tolower
     case "$reply" in
       y|yes) return 0 ;;
