@@ -217,5 +217,8 @@ if [[ $skipPush -eq 0 ]]; then
   git -C $repoPath commit -m "version bump on build: $newV"
   git -C $repoPath push --tags
 fi
-echo "Done. See $mcpack"
+echo "Done.
+Updated to $newV
+$mcpack 
+$(realpath $mcpack)"
 
