@@ -211,7 +211,7 @@ if [[ $skipPush -eq 0 ]]; then
   git -C $repoPath add "$mcpack"
   newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
   if [[ $skipTag -eq 0 ]]; then
-    git tag $newV
+    git tag -f $newV
     sync_git_tags --push-local --pull-remote
   fi
   git -C $repoPath commit -m "version bump on build: $newV"
