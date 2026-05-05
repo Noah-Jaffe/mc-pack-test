@@ -170,24 +170,47 @@ export class AutoChunkGenerator extends RepeatableEvent {
 	
 	updateResumeState(args) {
 		const flatArgs = flatten(args,".");
+		const validators = {
+			"#": (val) => !isNaN(Number(val)),
+			"#>0": (val) => Number(val)>0,
+		};
 		const resumeParser = [
-			{reg:/^(i|interval)/gmi, validTypes: ["number"], updator: (val) => this.interval = val }, 
-			{reg:/^(n|s|step)/gmi, validTypes: ["number"], updator: (val) => this.step = val }, 
-			{reg:/^(x|root.x)/gmi, validTypes: ["number"], updator: (val) => this.state.root.x = val }, 
-			{reg:/^(z|root.z)/gmi, validTypes: ["number"], updator: (val) => this.state.root.z = val }, 
-			{reg:/^(last.x|prev.x)/gmi, validTypes: ["number"], updator: (val) => this.state.lastCoords.x = val }, 
-			{reg:/^(last.z|prev.z)/gmi, validTypes: ["number"], updator: (val) => this.state.lastCoords.z = val }, 
+			{ flagReg: /^(i|interval)/gmi, desc: "ticks between steps", validator: "#>0", updates: "interval" }, 
+			{ flagReg: /^(n|s|step)/gmi, desc: "the step index in the spiral", validator: "#>0", updates: "step" }, 
+			{ flagReg: /^(x|root.x)/gmi, desc: "the center x coord of the spiral", validator: "#", updates: "state.root.x" }, 
+			{ flagReg: /^(z|root.z)/gmi, desc: "the center z coord of the spiral", validator: "#", updates: "state.root.z" }, 
 			];
+			// d="\t"; console.log(["CLI args to set starting state.",`<alias|flag>${d}<params>${d}<Updates>${d}<description>`,...resumeParser.map(e=>`${e.flagReg.source.replaceAll(/[\(\)\^\$]/gmi,"")}${d}<number>${d}${((/this\.([^ =:;]+)/gmi).exec(e.updater.toString())??['','value'])[1]}${d}Set the starting ${((/this\.([^ =:;]+)/gmi).exec(e.updater.toString())??['','value'])[1].replace(/^.*\.(.*)$/gmi,"$1")}`)].join("\n"))
 			resumeParser.forEach(e=> {
 				// if we were given an input key that matches the given reg, and it is of valid type, then apply the update.
-				let val=findByKeys(flatArgs, e.reg);
-				if (e.validTypes.includes(typeof val)) {
-					e.updator(val);
-					console.log(`Resume state for '${((/this\.([^ =:;]+)/gmi).exec(e.updator.toString())??['','value'])[1]}' set to ${JSON.stringify(val)}`);
-				} else if (val != undefined) {
-					console.log(`Unable to update '${((/this\.([^ =:;]+)/gmi).exec(e.updator.toString())??['','value'])[1]}', expected one of types: ${JSON.stringify(e.validValues)} but got ${JSON.stringify(val)}`);
+				let val = findByKeys(flatArgs, e.flagReg);
+				let flagAlias = e.reg?.source?.replaceAll(/^\W+(.*?)\W$/gmi, "$1");
+				let longFlag = flagAlias.split('|').sort((a, b) => a.length - b.length).pop();
+				// if no validator, or it fits the validation func...
+				if (typeof validators[e.validator] != "function" || validators[e.validator](val)) {
+					let attempt = 3;
+					try {
+						// try to set with raw value;
+						attempt--;
+						eval(`this.${e.updates} = ${val}`);
+					} catch {
+						try {
+							attempt--;
+							// try to set with jsonified value so that unquoted strings will work ok
+							eval(`this.${e.updates} = ${JSON.stringify(val)}`);
+						} catch {
+							// failed all types of setting.
+							attempt--;
+						}
+					}
+					if (attempt) {
+						console.log(`Resume state for '${e.updates}' set to ${JSON.stringify(val)}`);
+					} else {
+						console.error(`FATAL FAILURE trying set this.${this.updates} with the given value of ${JSON.stringify(val)}`);
+					}
+				} else {
+					console.warn(`Validation check for ${longFlag} failed, requires '${val}' to be '${e.validator}'!`);
 				}
-				
 			});
 			
 			
