@@ -6,7 +6,7 @@ import { mconsole as console } from "./debug.js";
 import { getChunkAtStep } from "./ChunkMath.js";
 import { parseScriptEventMessageForArgs } from "./ArgParser.js";
 import { RepeatableEvent } from "./RepeatableEvent.js";
-import { flatten } from "./Utils.js";
+import { flatten, findByKeys } from "./Utils.js";
 
 /**
 * @typedef {Object} RootPosition
