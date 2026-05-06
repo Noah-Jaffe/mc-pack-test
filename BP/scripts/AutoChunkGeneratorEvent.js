@@ -184,7 +184,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 			resumeParser.forEach(e=> {
 				// if we were given an input key that matches the given reg, and it is of valid type, then apply the update.
 				let val = findByKeys(flatArgs, e.flagReg);
-				let flagAlias = e.reg?.source?.replaceAll(/^\W+(.*?)\W$/gmi, "$1");
+				let flagAlias = e.flagReg?.source?.replaceAll(/^\W+(.*?)\W$/gmi, "$1");
 				let longFlag = flagAlias.split('|').sort((a, b) => a.length - b.length).pop();
 				// if no validator, or it fits the validation func...
 				if (typeof validators[e.validator] != "function" || validators[e.validator](val)) {
