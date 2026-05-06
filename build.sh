@@ -92,7 +92,183 @@ incrementMinorVersion() {
   $filePath::$varPath
     $preV -> $newV"
 }
+
+# latest_mod_date — Searches DIR (default: current directory) for files (can be filtered) and prints the most recent modification timestamp in UTC ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+# Usage:
+#   latest_mod_date [DIR] [--hidden] [GLOB ...]
+#   
+#  - [DIR] Optional, defaults to current directory ("./"). The directory to be parsed.
+#  - [--hidden] Optional. If given, will include results of hidden files and directories.
+#  - [GLOB ...] Optional, defaults to no restrictions. If given, will only include files that match any of the given globs, otherwise if none given, then it will match any file with respect to the hidden file filter. 
+# Examples
+#   latest_mod_date # latest mod time in current dir (ignore hidden)
+#   latest_mod_date --hidden # include hidden files and hidden directories
+#   latest_mod_date /var/log '*.log' # latest mod time among files matching *.log in /var/log (ignore hidden)
+#   latest_mod_date /path/to/dir --hidden '*.conf' '*.service'  # include hidden and matching the given globs in the given directory
+#   latest_mod_date "$repoPath" '*.js' # .js files in the repo
+latest_mod_date() {
+  local dir="."
+  local include_hidden=0
+  local -a globs=()
+
+  # Parse args
+  while (( $# )); do
+    case "$1" in
+      --hidden) include_hidden=1; shift ;;
+      --) shift; while (( $# )); do globs+=("$1"); shift; done; break ;;
+      -*)
+        printf 'Unknown option: %s\n' "$1" >&2
+        return 2
+        ;;
+      *)
+        if [[ -d "$1" && "${dir}" == "." && ${#globs[@]} -eq 0 ]]; then
+          dir="$1"
+          shift
+        else
+          globs+=("$1")
+          shift
+        fi
+        ;;
+    esac
+  done
+
+  local find_cmd=(find -- "${dir}")
+
+  if [[ $include_hidden -eq 0 ]]; then
+    find_cmd+=( \( -path '*/.*' -prune \) -o -type f -print )
+  else
+    find_cmd+=(-type f -print)
+  fi
+
+  if (( ${#globs[@]} )); then
+    find_cmd+=( -false )
+    for g in "${globs[@]}"; do
+      find_cmd+=( -o -name "$g" )
+    done
+  fi
+
+  # get max epoch (float) and convert to integer seconds
+  local best
+  best=$("${find_cmd[@]}" -printf '%T@ %p\n' 2>/dev/null \
+    | awk 'BEGIN{max=0} { if ($1+0>max) max=$1 } END{ if (max>0) printf("%.0f\n", max) }')
   
+  if [[ -z $best ]]; then
+    return 1
+  fi
+
+  # Output in UTC ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)
+  if date --version >/dev/null 2>&1; then
+    # GNU date: use -u for UTC and --date=@SECONDS with +%FT%TZ
+    date -u -d @"$best" '+%FT%TZ'
+  else
+    # BSD/macOS date: -u for UTC, -r SECONDS, format +%Y-%m-%dT%H:%M:%SZ
+    date -u -r "$best" '+%Y-%m-%dT%H:%M:%SZ'
+  fi
+}
+
+join() {
+  local d=${1-} f=${2-}
+  if shift 2; then
+    printf %s "$f" "${@/#/$d}"
+  fi
+}
+
+filter_files() {
+  local dir="."
+  local -a dirs=()
+  local show_hidden=0
+  local -a include_regex=()
+  local -a exclude_regex=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --hidden)
+        show_hidden=1
+        shift
+        ;;
+      -i|--include|--includes)
+        if [[ -z "$2" || "$2" == --* ]]; then
+          printf '%s\n' "filter_files: $1 requires an argument" >&2
+          return 2
+        fi
+        include_regex+=("$2")
+        shift 2
+        ;;
+      -e|--exclude|--excludes)
+        if [[ -z "$2" || "$2" == --* ]]; then
+          printf '%s\n' "filter_files: $1 requires an argument" >&2
+          return 2
+        fi
+        exclude_regex+=("$2")
+        shift 2
+        ;;
+      --)
+        shift; break ;;
+      -*)
+        printf '%s\n' "filter_files: unknown option: $1" >&2
+        return 2
+        ;;
+      *)
+        if [[ -d "$1" ]]; then
+          dirs+=("$1")
+        else
+          printf '%s\n' "ambiguous argument: '$1'" >&2
+        fi
+        shift
+        ;;
+    esac
+  done
+ # :{ # commented out v
+  printf '%s\n' "dirs:"
+  if (( ${#dirs[@]} )); then
+    for d in "${dirs[@]}"; do printf '  %s\n' "$d"; done
+  else
+    printf '  (none)\n'
+  fi
+
+  printf '%s\n' "hidden: $show_hidden"
+
+  printf '%s\n' "include:"
+  if (( ${#include_regex[@]} )); then
+    for r in "${include_regex[@]}"; do printf '  %s\n' "$r"; done
+  else
+    printf '  (none)\n'
+  fi
+
+  printf '%s\n' "exclude:"
+  if (( ${#exclude_regex[@]} )); then
+    for r in "${exclude_regex[@]}"; do printf '  %s\n' "$r"; done
+  else
+    printf '  (none)\n'
+  fi
+ # } #commented out ^
+  
+  local file_list=$(find "${dirs[@]}")
+  echo "all files $file_list"
+  #exclude_regex=('\.(json|lang)$' '/\.[^\.]')
+  if [[ $show_hidden -eq 0 ]]; then
+    exclude_regex+=('/\.[^\.]')
+  fi
+  echo "
+	exclude: $exclude_regex
+	include: $include_regex"
+	
+	exclude_regex=$(join "|" "${exclude_regex[@]}")
+	include_regex=$(join "|" "${include_regex[@]}")
+	
+	echo "
+	exclude: $exclude_regex
+	include: $include_regex"
+	if [[ ! -z $exclude_regex ]]; then
+	  file_list=$(echo "$file_list" | grep -v -E "$exclude_regex")
+	fi
+	echo "after exclude: $file_list"
+	if [[ ! -z $exclude_regex ]]; then
+	  file_list=$(echo "$file_list" | grep -E "$include_regex")
+	fi
+	echo "after include: $file_list"
+}
+
 # Parse flags with getopts
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
 PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help,path: --name "$0" -- "$@")
@@ -124,6 +300,7 @@ if [[ ! -d $repoPath ]]; then
 fi
 # Attempt to pull latest updates (if not skipped)
 if [[ $skipPull -eq 0 ]]; then
+  echo "pulling latest changes"
   git -C $repoPath pull || echo "not git repo"
 fi
 # -----------------------------
@@ -138,12 +315,13 @@ manifestPath="BP/manifest.json"
 #newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
 
 
-# --- Step 1: increment header.version[2] ---
+# --- increment header.version[2] ---
+echo "updating latest versions in $manifestPath"
 incrementMinorVersion "$manifestPath" ".header.version"
 
 newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
 
-# --- Step 2: collect changed files ---
+# --- collect changed files ---
 # changed in last commit & unstaged changes
 changed_files=$(
   {
@@ -152,43 +330,51 @@ changed_files=$(
   } | sort -u
 )
 
-# --- Step 3: process modules ---
+# --- update manifest module versions where applicable ---
 module_count=$(jq '.modules | length' "$manifestPath")
 manifestDir=$(dirname $manifestPath)
+
 for ((i=0; i<module_count; i++)); do
-
   entry=$(jq -r ".modules[$i].entry // empty" "$manifestPath")
-
   # Skip modules without .entry
   [[ -z "$entry" ]] && continue
-
   modulePath="$manifestDir/$entry"
-
   # Check if file changed
   if echo "$changed_files" | grep -qx "$modulePath"; then
     echo "updating version number for $module Path 《$(jq ".modules[$i].entry" "$manifestPath")》"
     incrementMinorVersion "$manifestPath" ".modules[$i].version"
   fi
-
 done
 
 
-# -----------------------------
-# Update language file build date
-# -----------------------------
+# --- Update language file to include the current build version so that it appears in the mcpack description ---
+echo "updating mcpack description in lang file"
 langbackup=$(mktemp)
 langFile="BP/texts/en_US.lang"
 cat "$repoPath$langFile" > "$langbackup"
 
+# --- mapping for templated variables in the lang file ---
+# will replace $langFile's teplated strings (`${<KEY>}`) with the variable names in $langFileVars.
+# example:
+#    langFile input string: "hello ${NAME}!"
+#    langFileVars["NAME"]="you"
+#    langFile output string: "hello you!"
+declare -A langFileVars
 
-build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-#@todo improve regex matching for the description string
-sed -i -r "s/(§2 )(.*?)( §r)/\1$build_date $newV\3/g" "$repoPath$langFile"
+langFileVars["BUILD_DATE"]=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # The build time of the mcpack file
+langFileVars["BUILD_VERSION"]=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.') # mcpack build version
+langFileVars["BUILD_COMMIT_HASH"]=$(git log -n 1 --format=%h) # effective commit hash for build (pre-bundle) (aka commit of last change before release) 
+langFileVars["LAST_REPO_FILE_MODIFIED_TS"]=$(latest_mod_date "$repoPath") # last repo file date modified, excluding hidden files (aka dont include .env or .git files)
+for key in "${!langFileVars[@]}"; do
+  echo "LANG var \${$key}='${langFileVars[$key]}'"
+  sed -i -r "s/\\\$\{$key\}/${langFileVars[$key]}/g" "$repoPath$langFile"
+done
 
 
-# -----------------------------
-# Create mcpack files
-# -----------------------------
+
+
+# --- Create mcpack files -- 
+echo "creating .mcpack file"
 behaviorPackDir="BP"
 behaviorPacked="BP.mcpack"
 mcpack=$(realpath $repoPath)
