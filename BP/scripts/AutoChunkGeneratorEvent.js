@@ -183,7 +183,9 @@ export class AutoChunkGenerator extends RepeatableEvent {
 			// d="\t"; console.log(["CLI args to set starting state.",`<alias|flag>${d}<params>${d}<Updates>${d}<description>`,...resumeParser.map(e=>`${e.flagReg.source.replaceAll(/[\(\)\^\$]/gmi,"")}${d}<number>${d}${((/this\.([^ =:;]+)/gmi).exec(e.updater.toString())??['','value'])[1]}${d}Set the starting ${((/this\.([^ =:;]+)/gmi).exec(e.updater.toString())??['','value'])[1].replace(/^.*\.(.*)$/gmi,"$1")}`)].join("\n"))
 			resumeParser.forEach(e=> {
 				// if we were given an input key that matches the given reg, and it is of valid type, then apply the update.
+				console.log(JSON.stringify(e))
 				let val = findByKeys(flatArgs, e.flagReg);
+				console.log(JSON.stringify(e))
 				let flagAlias = e.flagReg?.source?.replaceAll(/^\W+(.*?)\W$/gmi, "$1");
 				let longFlag = flagAlias?.split('|').sort((a, b) => a.length - b.length).pop();
 				// if no validator, or it fits the validation func...
