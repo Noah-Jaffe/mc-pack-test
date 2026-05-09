@@ -1,2 +1,9 @@
 pack.name=chunkGen
-pack.description=Pregenerate all the chunks! §2 _BUILD_DATE_ §r
+pack.description=Pregenerate all the chunks! §2 ${BUILD_DATE} ${BUILD_VERSION} ${BUILD_COMMIT_HASH} §r
+
+# The build time of the mcpack file
+langFileVars.BUILD_DATE=date -u +"%Y-%m-%dT%H:%M:%SZ"
+# mcpack build version
+langFileVars["BUILD_VERSION"]=echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.'
+# effective commit hash for build (pre-bundle) (aka commit of last change before release) 
+langFileVars["BUILD_COMMIT_HASH"]=git log -n 1 --format=%h
