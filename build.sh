@@ -79,6 +79,263 @@ sync_git_tags(){
   fi
 }
 
+# updateVersion() {
+#   local filePath=""
+#   local versionPath=""
+#   local -A updates=()
+#   local fname="$FUNCNAME"
+#   local showArgErrorMessage() {
+#   	printf "$fname: flag '-$1' requires an argument. One of: \n\t> +|i[nc[rement]]\t\t# Will increment node (max=100)\n\t> -|d[ec[rement]]\t\t# Will decrement the node (min=0)\n\t> r[eset]\t\t# Will reset the node to 0 (use when decrementing a parent node and want to reset this node)\n\t> <number>\t\t# Will set this node to this explicit value (e.g. `$fname -$1 0` -> will set the $1 node to 0)\n  " >&2
+#   }
+  
+#   local function getNodeAction() {
+#     local flag="${1#-}"
+#     local arg="$2"
+#     local numberReg='^[0-9]+$'
+    
+#     case "$arg" in
+#       +|i|inc|increment) echo "increment" ;;
+#       -|d|dec|decrement) echo "decrement" ;;
+#       r|reset) echo "0";;
+#       *)
+#         if [[ -z $arg || $arg == --* ]]; then
+#           # no arg value defaults to increment
+#           echo "increment"
+#         elif [[ $arg =~ $numberReg ]] ; then
+#           # is a number
+#           echo "$arg"
+#         else 
+#           # no other valid options
+#           echo "ERROR"
+#         fi
+#         ;;
+#   	esac
+  	
+#   }
+  
+#   while [[ $# -gt 0 ]]; do
+#     case "$1" in
+#       -f|--file|--path|--filePath)
+#         if [[ -f "$2" ]]; then
+#           printf '%s\n' "$FUNCNAME: $1 requires an argument that is an existing file path" >&2
+#           return 2
+#         fi
+#         filePath="$2"
+#         shift 2
+#         ;;
+#       -v|--version|--variable)
+#         if [[ -z "$2" || "$2" == --* ]]; then
+#           printf '%s\n' "$FUNCNAME: $1 requires an argument" >&2
+#           return 2
+#         fi
+#         versionPath="$2"
+#         shift 2
+#         ;;
+#       -*)
+#         local flag="${1#-}"
+#         local arg=$(getNodeAction "$2")
+#         if [[ $arg == "ERROR" ]]; then
+#           showArgErrorMessage $flag $2
+#           exit 1
+#         fi
+#         if [[ $flag =~ '^(-M|--major)$' ]]; then
+#           flag="0"
+#         elif [[ $flag =~ '^(-m|--minor)$' ]]; then
+#           flag="1"
+#         elif [[ $flag =~ '^(-p|--patch)$' ]]; then
+#           flag="2"
+#         elif [[ $flag =~ "^-*[0-9]$" ]]; then
+#           flag=$(echo "$flag" | sed 's/^-*//')
+#         fi
+        
+#         if (( arg >= 0 && arg <= 100 )); then 
+#           echo "$(jq -r "$versionPath[$flag] = $arg" $filePath)" > $filePath
+#         elif [[ $arg == "increment" ]]; then
+          
+#           echo "$FUNCNAME ERROR: Only version numbers 0-100 are supported for mcpacks!"
+#         fi
+#         ;;
+#       *)
+#     esac
+#   done
+# }
+updateVersion() {
+  local filePath=""
+  local versionPath=""
+  declare -A updates=()
+  local fname="$FUNCNAME"
+
+  local function showArgErrorMessage {
+    printf "%s: flag '-%s' requires an argument. One of:\n\t+|i[nc[rement]]\t\t# increment node (max=100)\n\t-|d[ec[rement]]\t\t# decrement node (min=0)\n\tr[eset]\t\t\t# set node to 0\n\t<number>\t\t# set node to explicit value (0..100)\n" "$fname" "$1" >&2
+  }
+
+  local function getNodeAction {
+    local arg="$1"
+    local numberReg='^[0-9]+$'
+    case "$arg" in
+      +|i|inc|increment) echo "increment" ;;
+      -|d|dec|decrement) echo "decrement" ;;
+      r|reset) echo "0" ;;
+      "")
+        # empty (caller will treat as increment)
+        echo "increment"
+        ;;
+      *)
+        if [[ $arg =~ $numberReg ]]; then
+          echo "$arg"
+        else
+          echo "ERROR"
+        fi
+        ;;
+    esac
+  }
+
+  # parse args
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -f|--file|--path|--filePath)
+        if [[ -z "$2" || "$2" == --* ]]; then
+          printf '%s\n' "$fname: $1 requires an argument (existing file path)" >&2
+          return 2
+        fi
+        if [[ ! -f "$2" ]]; then
+          printf '%s\n' "$fname: file not found: %s\n" "$fname" "$2" >&2
+          return 2
+        fi
+        filePath="$2"
+        shift 2
+        ;;
+      -v|--version|--variable)
+        if [[ -z "$2" || "$2" == --* ]]; then
+          printf '%s\n' "$fname: $1 requires an argument" >&2
+          return 2
+        fi
+        versionPath="$2"
+        shift 2
+        ;;
+      -M|--major|-m|--minor|-p|--patch|-[0-9]|--[0-9]|-[0-9]*)
+        {
+          local rawflag="$1"
+          local idx=""
+          # map named flags
+          case "$rawflag" in
+            -M|--major) idx=0 ;;
+            -m|--minor) idx=1 ;;
+            -p|--patch) idx=2 ;;
+            -[0-9]) idx="${rawflag#-}" ;;
+            --[0-9]) idx="${rawflag#--}" ;;
+            -[0-9]*)
+              idx="${rawflag#-}"
+              ;;
+            *)
+              printf "%s: unknown flag %s\n" "$fname" "$rawflag" >&2
+              return 2
+              ;;
+          esac
+
+          # argument may be next param (if provided) or default to increment
+          local next="$2"
+          local action
+          if [[ -z "$next" || "$next" == --* ]]; then
+            action="$(getNodeAction "")"
+            # don't shift an extra arg
+            shift
+          else
+            action="$(getNodeAction "$next")"
+            shift 2
+          fi
+
+          if [[ $action == "ERROR" ]]; then
+            showArgErrorMessage "$idx"
+            return 2
+          fi
+
+          updates["$idx"]="$action"
+        } ;;
+      -*)
+        # generic single-dash numeric like -0 -1 etc or flags combined: try to parse
+        {
+          local raw="$1"
+          # strip leading dashes
+          local stripped="${raw#-}"
+          if [[ "$stripped" =~ ^[0-9]+$ ]]; then
+            local idx="$stripped"
+            local next="$2"
+            local action
+            if [[ -z "$next" || "$next" == --* ]]; then
+              action="$(getNodeAction "")"
+              shift
+            else
+              action="$(getNodeAction "$next")"
+              shift 2
+            fi
+            if [[ $action == "ERROR" ]]; then
+              showArgErrorMessage "$idx"
+              return 2
+            fi
+            updates["$idx"]="$action"
+          else
+            printf "%s: unknown option: %s\n" "$fname" "$1" >&2
+            return 2
+          fi
+        } ;;
+      *)
+        printf "%s: unexpected argument: %s\n" "$fname" "$1" >&2
+        return 2
+        ;;
+    esac
+  done
+
+  if [[ -z "$filePath" || -z "$versionPath" ]]; then
+    printf '%s: both -f <file> and -v <jq_path> are required\n' "$fname" >&2
+    return 2
+  fi
+  # build jq filter from updates: perform numeric bounds checks and increments
+  local jqFilter=""
+  # iterate keys in numeric order
+  local keys
+  IFS=$'\n' read -r -d '' -a keys < <(printf '%s\n' "${!updates[@]}" | sort -n; printf '\0')
+  #IFS=$'\n' keys=($(printf '%s\n' "${!updates[@]}" | sort -n))
+  unset IFS
+  for k in "${keys[@]}"; do
+    local act="${updates[$k]}"
+    # produce jq expression for this index
+    if [[ "$act" == "increment" ]]; then
+      # increment with cap 100
+      jqFilter+="(($versionPath[$k] // 0) + 1) as \$new | if \$new > 100 then (error(\"version node $versionPath[$k] would exceed 100\")) else . end | $versionPath[$k] = \$new | "
+    elif [[ "$act" == "decrement" ]]; then
+      jqFilter+="(($versionPath[$k] // 0) - 1) as \$new | if \$new < 0 then (error(\"version node $versionPath[$k] would become negative\")) else . end | $versionPath[$k] = \$new | "
+    else
+      # explicit number (including "0" from reset)
+      if ! [[ "$act" =~ ^[0-9]+$ ]]; then
+        printf '%s: invalid action for node %s: %s\n' "$fname" "$k" "$act" >&2
+        return 2
+      fi
+      if (( act < 0 || act > 100 )); then
+        printf '%s: value for node %s out of bounds (0..100): %s\n' "$fname" "$k" "$act" >&2
+        return 2
+      fi
+      jqFilter+="$versionPath[$k] = $act | "
+    fi
+  done
+  # remove trailing " | " if present
+  jqFilter="${jqFilter% | }"
+  if [[ -z "$jqFilter" ]]; then
+    printf '%s: no updates to apply\n' "$fname" >&2
+    return 0
+  fi
+  # run jq and write atomically
+  local tmp
+  tmp="$(mktemp)" || { printf '%s: mktemp failed\n' "$fname" >&2; return 2; }
+  if ! jq "$jqFilter" "$filePath" > "$tmp" 2> >(sed "s/^/$fname: /" >&2); then
+ # if ! jq --argjson dummy true "$jqFilter" "$filePath" > "$tmp" 2> >(sed "s/^/$fname: /" >&2); then
+    rm -f "$tmp"
+    return 2
+  fi
+  mv "$tmp" "$filePath" || { printf '%s: failed to write file\n' "$fname" >&2; rm -f "$tmp"; return 2; }
+  return 0
+}
+
 # Increment minor version of a path inside a json file
 incrementMinorVersion() {
   local filePath=$1;
@@ -93,7 +350,8 @@ incrementMinorVersion() {
     $preV -> $newV"
 }
 
-# latest_mod_date — Searches DIR (default: current directory) for files (can be filtered) and prints the most recent modification timestamp in UTC ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+#{ latest_mod_date 
+# Searches DIR (default: current directory) for files (can be filtered) and prints the most recent modification timestamp in UTC ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
 # Usage:
 #   latest_mod_date [DIR] [--hidden] [GLOB ...]
 #   
@@ -165,6 +423,7 @@ latest_mod_date() {
     date -u -r "$best" '+%Y-%m-%dT%H:%M:%SZ'
   fi
 }
+#}
 
 join() {
   local d=${1-} f=${2-}
@@ -245,7 +504,6 @@ filter_files() {
   
   local file_list=$(find "${dirs[@]}")
   echo "all files $file_list"
-  #exclude_regex=('\.(json|lang)$' '/\.[^\.]')
   if [[ $show_hidden -eq 0 ]]; then
     exclude_regex+=('/\.[^\.]')
   fi
@@ -269,6 +527,7 @@ filter_files() {
 	echo "after include: $file_list"
 }
 
+#{ --- Process CLI args *see function usage
 # Parse flags with getopts
 # --options: short flags; --longoptions: long flags; --: separate flags from positional args
 PARSED_ARGS=$(getopt --options h --longoptions no-pull,no-tag,no-push,help,path: --name "$0" -- "$@")
@@ -298,30 +557,26 @@ if [[ ! -d $repoPath ]]; then
   echo "--path must resolve to a valid existing directory of a mcpack src directory!"
   exit 1
 fi
-# Attempt to pull latest updates (if not skipped)
+#}
+
+#{ --- Attempt to pull latest updates *see --skipPull ---
 if [[ $skipPull -eq 0 ]]; then
   echo "pulling latest changes"
   git -C $repoPath pull || echo "not git repo"
 fi
-# -----------------------------
-# Update version in manifest
-# -----------------------------
+#}
+
+#{ --- Update version in manifest
 manifestPath="BP/manifest.json"
-
-# Increment plugin version minor
-
-#prvV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
-#jq  ".header.version[2]+=1" > "$repoPath$manifestPath"
-#newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
-
 
 # --- increment header.version[2] ---
 echo "updating latest versions in $manifestPath"
 incrementMinorVersion "$manifestPath" ".header.version"
 
 newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
+#}
 
-# --- collect changed files ---
+#{ --- update manifest module versions where applicable ---
 # changed in last commit & unstaged changes
 changed_files=$(
   {
@@ -329,8 +584,6 @@ changed_files=$(
     git diff --name-only
   } | sort -u
 )
-
-# --- update manifest module versions where applicable ---
 module_count=$(jq '.modules | length' "$manifestPath")
 manifestDir=$(dirname $manifestPath)
 
@@ -345,29 +598,31 @@ for ((i=0; i<module_count; i++)); do
     incrementMinorVersion "$manifestPath" ".modules[$i].version"
   fi
 done
+#}
 
-
-# --- Update language file to include the current build version so that it appears in the mcpack description ---
+#{ --- Update language file to include the current build version so that it appears in the mcpack description ---
 echo "updating mcpack description in lang file"
 langbackup=$(mktemp)
 langFile="BP/texts/en_US.lang"
 cat "$repoPath$langFile" > "$langbackup"
 
-# --- mapping for templated variables in the lang file ---
+#{ --- mapping for templated variables in the lang file ---
 # will replace $langFile's teplated strings (`${<KEY>}`) with the variable names in $langFileVars.
 # example:
 #    langFile input string: "hello ${NAME}!"
 #    langFileVars["NAME"]="you"
 #    langFile output string: "hello you!"
 declare -A langFileVars
-
 langFileVars["BUILD_DATE"]=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # The build time of the mcpack file
 langFileVars["BUILD_VERSION"]=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.') # mcpack build version
 langFileVars["BUILD_COMMIT_HASH"]=$(git log -n 1 --format=%h) # effective commit hash for build (pre-bundle) (aka commit of last change before release) 
 langFileVars["LAST_REPO_FILE_MODIFIED_TS"]=$(latest_mod_date "$repoPath") # last repo file date modified, excluding hidden files (aka dont include .env or .git files)
-
-# UNSAFE METHOD OF DYNAMICALLY GENERATING langFileVars:
-#{ 
+for key in "${!langFileVars[@]}"; do
+  echo "LANG var \${$key}='${langFileVars[$key]}'"
+  sed -i -r "s/\\\$\{$key\}/${langFileVars[$key]}/g" "$repoPath$langFile"
+done
+#}
+#{ UNSAFE METHOD OF DYNAMICALLY GENERATING langFileVars:
 # declare -A langFileVars
 # while IFS= read -r line; do
 #   # Trim leading/trailing whitespace
@@ -396,16 +651,9 @@ langFileVars["LAST_REPO_FILE_MODIFIED_TS"]=$(latest_mod_date "$repoPath") # last
 #   fi
 # done < "$repoPath$langFile"
 #} 
+#}
 
-for key in "${!langFileVars[@]}"; do
-  echo "LANG var \${$key}='${langFileVars[$key]}'"
-  sed -i -r "s/\\\$\{$key\}/${langFileVars[$key]}/g" "$repoPath$langFile"
-done
-
-
-
-
-# --- Create mcpack files -- 
+#{ --- Create mcpack files -- 
 echo "creating .mcpack file"
 behaviorPackDir="BP"
 behaviorPacked="BP.mcpack"
@@ -429,7 +677,9 @@ echo "restoring files"
 #git -C $repoPath restore $manifestPath
 #git -C $repoPath restore $langFile
 mv "$langbackup" "$repoPath$langFile"
+#}
 
+#{ --- push build *see cli args --skipTag, --skipPush ---
 if [[ $skipPush -eq 0 ]]; then
   git -C $repoPath add "$repoPath$manifestPath"
   git -C $repoPath add "$mcpack"
@@ -441,6 +691,8 @@ if [[ $skipPush -eq 0 ]]; then
   git -C $repoPath commit -m "version bump on build: $newV"
   git -C $repoPath push --tags
 fi
+#}
+
 echo "Done.
 Updated to $newV
 $mcpack 
