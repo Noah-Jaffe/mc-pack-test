@@ -185,7 +185,7 @@ export class AutoChunkGenerator extends RepeatableEvent {
 				// if we were given an input key that matches the given reg, and it is of valid type, then apply the update.
 				console.log(JSON.stringify(e))
 				let val = findByKeys(flatArgs, e.flagReg);
-				console.log(JSON.stringify(e))
+				console.log(JSON.stringify(e.flagReg?.source.toString()))
 				let flagAlias = e.flagReg?.source?.replaceAll(/^\W+(.*?)\W$/gmi, "$1");
 				let longFlag = flagAlias?.split('|').sort((a, b) => a.length - b.length).pop();
 				// if no validator, or it fits the validation func...
