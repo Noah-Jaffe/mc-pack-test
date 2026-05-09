@@ -365,6 +365,38 @@ langFileVars["BUILD_DATE"]=$(date -u +"%Y-%m-%dT%H:%M:%SZ") # The build time of 
 langFileVars["BUILD_VERSION"]=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.') # mcpack build version
 langFileVars["BUILD_COMMIT_HASH"]=$(git log -n 1 --format=%h) # effective commit hash for build (pre-bundle) (aka commit of last change before release) 
 langFileVars["LAST_REPO_FILE_MODIFIED_TS"]=$(latest_mod_date "$repoPath") # last repo file date modified, excluding hidden files (aka dont include .env or .git files)
+
+# UNSAFE METHOD OF DYNAMICALLY GENERATING langFileVars:
+#{ 
+# declare -A langFileVars
+# while IFS= read -r line; do
+#   # Trim leading/trailing whitespace
+#   line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+#   # Skip empty lines and comments
+#   [[ -z "$line" || "$line" =~ ^# ]] && continue
+#   # Match:
+#   #   langFileVars.KEY=...
+#   #   langFileVars["KEY"]=...
+#   if [[ "$line" =~ ^langFileVars\.([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
+#     key="${BASH_REMATCH[1]}"
+#     cmd="${BASH_REMATCH[2]}"
+#     echo "parsed: langFileVars.$key=$cmd"
+#     # Evaluate command and store result
+#     #value="$(eval "$cmd")"
+#     # evaluate in a safer manner
+#     value="$(
+#     (
+#       set -a
+#       source <(declare -p newV repoPath 2>/dev/null)
+#       bash -o pipefail -c "$cmd"
+#     )
+#     )"
+#     langFileVars["$key"]="$value"
+#     echo "LANG var \${$key}='${langFileVars[$key]}'" 
+#   fi
+# done < "$repoPath$langFile"
+#} 
+
 for key in "${!langFileVars[@]}"; do
   echo "LANG var \${$key}='${langFileVars[$key]}'"
   sed -i -r "s/\\\$\{$key\}/${langFileVars[$key]}/g" "$repoPath$langFile"
