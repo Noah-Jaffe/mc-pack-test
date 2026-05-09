@@ -488,7 +488,7 @@ manifestPath="BP/manifest.json"
 # --- increment header.version[2] ---
 echo "updating latest versions in $manifestPath"
 # @todo find a dynamic way to determine which version is upgraded?
-updateVersion "$manifestPath" ".header.version" -p
+updateVersion -f "$manifestPath" -v ".header.version" -p
 
 newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
 #}
