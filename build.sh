@@ -79,97 +79,18 @@ sync_git_tags(){
   fi
 }
 
-# updateVersion() {
-#   local filePath=""
-#   local versionPath=""
-#   local -A updates=()
-#   local fname="$FUNCNAME"
-#   local showArgErrorMessage() {
-#   	printf "$fname: flag '-$1' requires an argument. One of: \n\t> +|i[nc[rement]]\t\t# Will increment node (max=100)\n\t> -|d[ec[rement]]\t\t# Will decrement the node (min=0)\n\t> r[eset]\t\t# Will reset the node to 0 (use when decrementing a parent node and want to reset this node)\n\t> <number>\t\t# Will set this node to this explicit value (e.g. `$fname -$1 0` -> will set the $1 node to 0)\n  " >&2
-#   }
-  
-#   local function getNodeAction() {
-#     local flag="${1#-}"
-#     local arg="$2"
-#     local numberReg='^[0-9]+$'
-    
-#     case "$arg" in
-#       +|i|inc|increment) echo "increment" ;;
-#       -|d|dec|decrement) echo "decrement" ;;
-#       r|reset) echo "0";;
-#       *)
-#         if [[ -z $arg || $arg == --* ]]; then
-#           # no arg value defaults to increment
-#           echo "increment"
-#         elif [[ $arg =~ $numberReg ]] ; then
-#           # is a number
-#           echo "$arg"
-#         else 
-#           # no other valid options
-#           echo "ERROR"
-#         fi
-#         ;;
-#   	esac
-  	
-#   }
-  
-#   while [[ $# -gt 0 ]]; do
-#     case "$1" in
-#       -f|--file|--path|--filePath)
-#         if [[ -f "$2" ]]; then
-#           printf '%s\n' "$FUNCNAME: $1 requires an argument that is an existing file path" >&2
-#           return 2
-#         fi
-#         filePath="$2"
-#         shift 2
-#         ;;
-#       -v|--version|--variable)
-#         if [[ -z "$2" || "$2" == --* ]]; then
-#           printf '%s\n' "$FUNCNAME: $1 requires an argument" >&2
-#           return 2
-#         fi
-#         versionPath="$2"
-#         shift 2
-#         ;;
-#       -*)
-#         local flag="${1#-}"
-#         local arg=$(getNodeAction "$2")
-#         if [[ $arg == "ERROR" ]]; then
-#           showArgErrorMessage $flag $2
-#           exit 1
-#         fi
-#         if [[ $flag =~ '^(-M|--major)$' ]]; then
-#           flag="0"
-#         elif [[ $flag =~ '^(-m|--minor)$' ]]; then
-#           flag="1"
-#         elif [[ $flag =~ '^(-p|--patch)$' ]]; then
-#           flag="2"
-#         elif [[ $flag =~ "^-*[0-9]$" ]]; then
-#           flag=$(echo "$flag" | sed 's/^-*//')
-#         fi
-        
-#         if (( arg >= 0 && arg <= 100 )); then 
-#           echo "$(jq -r "$versionPath[$flag] = $arg" $filePath)" > $filePath
-#         elif [[ $arg == "increment" ]]; then
-          
-#           echo "$FUNCNAME ERROR: Only version numbers 0-100 are supported for mcpacks!"
-#         fi
-#         ;;
-#       *)
-#     esac
-#   done
-# }
+
 updateVersion() {
   local filePath=""
   local versionPath=""
   declare -A updates=()
   local fname="$FUNCNAME"
 
-  local function showArgErrorMessage {
+  function showArgErrorMessage {
     printf "%s: flag '-%s' requires an argument. One of:\n\t+|i[nc[rement]]\t\t# increment node (max=100)\n\t-|d[ec[rement]]\t\t# decrement node (min=0)\n\tr[eset]\t\t\t# set node to 0\n\t<number>\t\t# set node to explicit value (0..100)\n" "$fname" "$1" >&2
   }
 
-  local function getNodeAction {
+  function getNodeAction {
     local arg="$1"
     local numberReg='^[0-9]+$'
     case "$arg" in
@@ -190,7 +111,7 @@ updateVersion() {
     esac
   }
 
-  # parse args
+  #{ parse args
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -f|--file|--path|--filePath)
@@ -290,12 +211,13 @@ updateVersion() {
     printf '%s: both -f <file> and -v <jq_path> are required\n' "$fname" >&2
     return 2
   fi
-  # build jq filter from updates: perform numeric bounds checks and increments
+  #}
+  local preV=$(jq "$versionPath" "$filePath" | tr -d '\n ' )
+  #{ build jq filter from updates: perform numeric bounds checks and increments
   local jqFilter=""
   # iterate keys in numeric order
   local keys
   IFS=$'\n' read -r -d '' -a keys < <(printf '%s\n' "${!updates[@]}" | sort -n; printf '\0')
-  #IFS=$'\n' keys=($(printf '%s\n' "${!updates[@]}" | sort -n))
   unset IFS
   for k in "${keys[@]}"; do
     local act="${updates[$k]}"
@@ -324,7 +246,8 @@ updateVersion() {
     printf '%s: no updates to apply\n' "$fname" >&2
     return 0
   fi
-  # run jq and write atomically
+  #}
+  #{ run jq and write atomically
   local tmp
   tmp="$(mktemp)" || { printf '%s: mktemp failed\n' "$fname" >&2; return 2; }
   if ! jq "$jqFilter" "$filePath" > "$tmp" 2> >(sed "s/^/$fname: /" >&2); then
@@ -333,21 +256,14 @@ updateVersion() {
     return 2
   fi
   mv "$tmp" "$filePath" || { printf '%s: failed to write file\n' "$fname" >&2; rm -f "$tmp"; return 2; }
-  return 0
-}
-
-# Increment minor version of a path inside a json file
-incrementMinorVersion() {
-  local filePath=$1;
-  local varPath=$2;
-  local preV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
-  echo "$(jq -r "$varPath[2] += 1" $filePath)" > $filePath
-  local newV=$(jq "$varPath" "$filePath" | tr -d '\n ' )
+  local newV=$(jq "$versionPath" "$filePath" | tr -d '\n ' )
   preV=$(echo "$preV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
   newV=$(echo "$newV" | sed -E 's/[^A-Za-z0-9]+/ /g' | xargs | tr ' ' '.')
+  #}
   echo "Updated version:
   $filePath::$varPath
     $preV -> $newV"
+  return 0
 }
 
 #{ latest_mod_date 
@@ -571,7 +487,8 @@ manifestPath="BP/manifest.json"
 
 # --- increment header.version[2] ---
 echo "updating latest versions in $manifestPath"
-incrementMinorVersion "$manifestPath" ".header.version"
+# @todo find a dynamic way to determine which version is upgraded?
+updateVersion "$manifestPath" ".header.version" -p
 
 newV=$(jq '.header.version' "$repoPath$manifestPath" | tr -d '\n ' )
 #}
