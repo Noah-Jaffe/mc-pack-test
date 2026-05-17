@@ -197,6 +197,7 @@
       ]
     }
   ],
+  "capabilities": ["script_eval"],
   "dependencies": [
     {
       "module_name": "@minecraft/server",
