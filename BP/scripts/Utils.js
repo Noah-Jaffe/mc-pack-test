@@ -1,5 +1,9 @@
 
-
+/**
+ * @param {Object} obj object to be flattened
+ * @param {string} sep separator use as a delimiter
+ * @returns flat object where keys are updated to be . and [#] paths for their respective leafs.
+ */
 export function flatten(obj, sep = '.') {
 	const out = {};
 	(function recurse(val, prefix = '') {
@@ -18,7 +22,11 @@ export function flatten(obj, sep = '.') {
 	return out;
 }
 
-
+/**
+ * @param {Object} obj object to be searched
+ * @param {RegExp} keyReg the regex to be used to search the object in a flattened key style
+ * @returns {Object|Object[]|undefined} the value(s) of the keys matched for the given key reg
+ */
 export function findByKeys(obj, keyReg) {
 	let found = 0;
 	let ret = Object.entries(obj).reduce((acc, [k,v]) => {
