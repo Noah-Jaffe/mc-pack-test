@@ -512,7 +512,7 @@ for ((i=0; i<module_count; i++)); do
   # Check if file changed
   if echo "$changed_files" | grep -qx "$modulePath"; then
     echo "updating version number for $module Path 《$(jq ".modules[$i].entry" "$manifestPath")》"
-    incrementMinorVersion "$manifestPath" ".modules[$i].version"
+    updateVersion -f "$manifestPath" -v "modules[$i].version" -p
   fi
 done
 #}
