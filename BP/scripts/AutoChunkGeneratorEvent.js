@@ -206,9 +206,9 @@ export class AutoChunkGenerator extends RepeatableEvent {
 						}
 					}
 					if (attempt) {
-						console.log(`Resume state for '${e.updates}' set to ${JSON.stringify(val)}`);
+						console.log(`Resume state for '${e.updates}' set to ${JSON.stringify(val)} (${this[e.updates]})`);
 					} else {
-						console.error(`FATAL FAILURE trying set this.${this.updates} with the given value of ${JSON.stringify(val)}`);
+						console.error(`FATAL FAILURE trying set this.${e.updates} with the given value of ${JSON.stringify(val)}, currently ${this[e.updates]}`);
 					}
 				} else {
 					console.warn(`Validation check for ${longFlag} failed, requires '${val}' to be '${e.validator}'!`);
