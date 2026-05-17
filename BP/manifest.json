@@ -13,7 +13,8 @@
       1,
       6,
       14
-    ]
+    ],
+    "pack_scope": "world"
   },
   "metadata": {
     "authors": [
@@ -26,6 +27,160 @@
       "language": "javascript",
       "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661002",
       "entry": "scripts/main.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661004",
+      "entry": "scripts/ArgParser.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661005",
+      "entry": "scripts/AutoChunkGeneratorEvent.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661006",
+      "entry": "scripts/Chunk.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661007",
+      "entry": "scripts/ChunkLoader.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661008",
+      "entry": "scripts/ChunkMath.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661009",
+      "entry": "scripts/ColorCodes.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661010",
+      "entry": "scripts/EventRepeater.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661011",
+      "entry": "scripts/Interfaces",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661012",
+      "entry": "scripts/Interfaces/IChunkManager.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661013",
+      "entry": "scripts/RepeatableEvent.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661014",
+      "entry": "scripts/ScriptState.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661015",
+      "entry": "scripts/debug.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661016",
+      "entry": "scripts/mockMc.js",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "8dfac781-19f9-4b57-9dd4-f256b7661018",
+      "entry": "scripts/Utils.js",
       "version": [
         1,
         0,
