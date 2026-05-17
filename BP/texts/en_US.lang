@@ -1,2 +1,2 @@
 pack.name=chunkGen
-pack.description=Pregenerate all the chunks! §2${LAST_REPO_FILE_MODIFIED_TS}§3${BUILD_DATE} §4${BUILD_VERSION}§5${BUILD_COMMIT_HASH}§r
+pack.description=Pregenerate all the chunks! §2${LAST_REPO_FILE_MODIFIED_TS} §3${BUILD_DATE} §4${BUILD_VERSION} §5${BUILD_COMMIT_HASH}§r
