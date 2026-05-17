@@ -605,9 +605,11 @@ if [[ $skipPush -eq 0 ]]; then
     git tag -f $newV
     sync_git_tags --push-local
   fi
+  git -C $repoPath status
   git -C $repoPath commit -m "version bump on build: $newV"
   git -C $repoPath rebase
   git -C $repoPath push --tags -f
+  git -C $repoPath push
 fi
 #}
 
